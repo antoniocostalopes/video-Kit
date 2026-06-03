@@ -66,15 +66,41 @@ Confirma no fim: `Estilo guardado. Já posso editar os teus vídeos com este loo
 
 Antes da primeira fase do pipeline:
 
-1. Verifica `~/.claude/skills/videokit/cache/env-report.json`. Se não existir, corre:
+1. **Deteta o SO** para fazer routing entre scripts PowerShell (`.ps1`) e Bash (`.sh`):
+   - Windows: usar `.ps1` via PowerShell
+   - macOS / Linux: usar `.sh` via Bash
+2. Verifica `~/.claude/skills/videokit/cache/env-report.json`. Se não existir, corre:
    ```powershell
+   # Windows
    & "$env:USERPROFILE\.claude\skills\videokit\scripts\detect-env.ps1"
    ```
-   O script escreve o report dentro de `cache/` da skill. Em mac/Linux: `bash ~/.claude/skills/videokit/scripts/detect-env.sh`.
-2. Lê `env-report.json` para `ffmpeg_bin`, `ffprobe_bin`, `python_bin`, `whisper_installed`, `libass_available`, `transcription_provider`.
-3. Em produção usa **sempre** caminhos completos lidos do report. Nunca invoques `ffmpeg`/`ffprobe` nus em Windows.
-4. Se utilizador escolheu Whisper local e `whisper_installed=false`: instala com `pip install -U openai-whisper` (com o `python_bin` do report). Avisa do download de modelo na primeira corrida.
-5. Em Windows define no ambiente da sessão: `PYTHONIOENCODING=utf-8` e `MPLCONFIGDIR=<skill>/cache`.
+   ```bash
+   # macOS / Linux
+   bash ~/.claude/skills/videokit/scripts/detect-env.sh
+   ```
+   O script escreve o report dentro de `cache/` da skill. O campo `os` em `env-report.json` confirma `windows`/`macos`/`linux` — usa-o para decidir entre `.ps1` e `.sh` em invocações posteriores.
+3. Lê `env-report.json` para `ffmpeg_bin`, `ffprobe_bin`, `python_bin`, `whisper_installed`, `libass_available`, `transcription_provider`.
+4. Em produção usa **sempre** caminhos completos lidos do report. Nunca invoques `ffmpeg`/`ffprobe` nus em Windows.
+5. Se utilizador escolheu Whisper local e `whisper_installed=false`: instala com `pip install -U openai-whisper` (com o `python_bin` do report). Avisa do download de modelo na primeira corrida.
+6. Em Windows define no ambiente da sessão: `PYTHONIOENCODING=utf-8` e `MPLCONFIGDIR=<skill>/cache`.
+
+### Tabela de routing por script
+
+| Operação | Windows | macOS / Linux |
+|---|---|---|
+| Detect env | `detect-env.ps1` | `detect-env.sh` |
+| Init project | `init-project.ps1 -InputVideo X` | `init-project.sh --input X` |
+| Download models | `download-assets.ps1` | `download-assets.sh` |
+| Audio pack | `audio-process.ps1` | `audio-process.sh` |
+| Visual effects | `visual-effects.ps1` | `visual-effects.sh` |
+| Burn subs | `burn-subtitles.ps1` | `burn-subtitles.sh` |
+| Render orchestrator | `render.ps1` | `render.sh` |
+| Auto-cut | `auto-cut.py` (cross-platform) |
+| Transcribe | `transcribe.py` (cross-platform) |
+| Smart reframe | `smart-reframe.py` (cross-platform) |
+| Gen LUTs | `gen-luts.py` (cross-platform) |
+
+Os scripts Python são cross-platform — invocados via `python3` (Unix) ou `python` (Windows), lê o `python_bin` do `env-report.json`.
 
 ## Criar projeto para um vídeo
 

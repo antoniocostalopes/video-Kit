@@ -29,6 +29,7 @@ param(
     [Parameter(Mandatory=$true)][string]$ProjectDir,
     [ValidateSet("cut","subs","effects","overlays","all","verify")][string]$Phase = "all",
     [ValidateSet("draft","final")][string]$Quality = "draft",
+    [switch]$CleanCache,
     [string]$WorkspaceDir = (Split-Path -Parent $PSScriptRoot)
 )
 
@@ -372,6 +373,16 @@ switch ($Phase) {
         Invoke-EffectsPhase
         Invoke-OverlaysPhase
         Invoke-VerifyPhase
+    }
+}
+
+# Auto-cleanup do cache/ se pedido
+if ($CleanCache) {
+    $cacheDir = Join-Path $ProjectDir "cache"
+    if (Test-Path $cacheDir) {
+        Write-Host "A limpar cache/ (-CleanCache pedido)..."
+        Get-ChildItem -Path $cacheDir -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+        Write-Host "OK cache/ limpo (verify/ e renders/ mantidos)" -ForegroundColor Green
     }
 }
 

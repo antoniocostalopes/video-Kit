@@ -12,6 +12,8 @@
   [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.x-007808.svg)](https://ffmpeg.org)
   [![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](https://python.org)
 
+  **Línguas:** Português · [English](README.en.md)
+
 </div>
 
 ---

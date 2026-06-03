@@ -131,6 +131,14 @@ if (-not (Test-Path $InputVideo)) {
 }
 $InputVideo = (Resolve-Path $InputVideo).Path
 
+# Validacao 1: extensao de ficheiro
+$validExts = @(".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v", ".mts", ".m2ts")
+$ext = [System.IO.Path]::GetExtension($InputVideo).ToLowerInvariant()
+if ($ext -notin $validExts) {
+    Write-Error "Extensao '$ext' nao suportada. Use uma de: $($validExts -join ', ')"
+    exit 1
+}
+
 $envReportPath = Join-Path $SkillDir "cache\env-report.json"
 if (-not (Test-Path $envReportPath)) {
     Write-Host "env-report.json nao existe. A correr detect-env..."
@@ -146,6 +154,54 @@ $ffprobeBin = $envReport.ffprobe_bin
 if (-not $ffprobeBin) {
     Write-Error "ffprobe_bin nao definido em env-report.json"
     exit 1
+}
+
+# Validacao 2: ficheiro tem audio stream + duracao razoavel
+Write-Host "A validar input..."
+$probeCmd = "`"$ffprobeBin`" -v error -show_entries stream=codec_type:format=duration -of json `"$InputVideo`" 2>&1"
+$probeOut = cmd /c $probeCmd | Out-String
+try {
+    $probeData = $probeOut | ConvertFrom-Json
+} catch {
+    Write-Error "ffprobe falhou no input. Ficheiro corrupto ou nao e video? $probeOut"
+    exit 1
+}
+
+$hasAudio = $false
+foreach ($s in $probeData.streams) {
+    if ($s.codec_type -eq "audio") { $hasAudio = $true; break }
+}
+if (-not $hasAudio) {
+    Write-Warning "Video nao tem stream de audio. Transcricao sera impossivel."
+}
+
+if ($probeData.format.duration) {
+    $dur = [double]::Parse($probeData.format.duration, [System.Globalization.CultureInfo]::InvariantCulture)
+    if ($dur -lt 1) {
+        Write-Error "Duracao $dur s muito curta (min 1s)."
+        exit 1
+    }
+    if ($dur -gt 7200) {
+        Write-Warning "Duracao $dur s > 2h. Pipeline pode demorar bastante (transcricao, render)."
+    }
+}
+
+# Validacao 3: espaco em disco (estimativa: 6x source size ou 3GB minimo)
+$sourceSizeBytes = (Get-Item $InputVideo).Length
+$requiredMb = [math]::Max(3000, [math]::Round($sourceSizeBytes * 6 / 1MB))
+
+if ([string]::IsNullOrEmpty($OutputDir)) {
+    $outputParent = Split-Path -Parent $InputVideo
+} else {
+    $outputParent = $OutputDir
+}
+$drive = (Get-Item $outputParent).PSDrive
+if ($drive) {
+    $freeMb = [math]::Round($drive.Free / 1MB)
+    if ($freeMb -lt $requiredMb) {
+        Write-Error "Espaco insuficiente em $($drive.Name): livres ${freeMb}MB, necessarios ~${requiredMb}MB."
+        exit 1
+    }
 }
 
 # --- Decidir OutputDir ---
