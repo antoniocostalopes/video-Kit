@@ -7,7 +7,7 @@
 
   Transcrição com Whisper · Corte automático · Legendas burned-in · Motion graphics · LUTs cinematográficos · Reframe 16:9 → 9:16 com tracking de cara
 
-  [![License: Proprietary](https://img.shields.io/badge/license-Proprietary-DC2626.svg)](LICENSE)
+  [![Author](https://img.shields.io/badge/author-Antonio%20Costa%20Lopes-1E3A8A.svg)](#autoria)
   [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-7C3AED.svg)](https://docs.anthropic.com/en/docs/claude-code)
   [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.x-007808.svg)](https://ffmpeg.org)
   [![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](https://python.org)
@@ -400,7 +400,6 @@ A skill aceita ambos os estilos — conversação flexível ou slash com flags. 
 videokit/
 ├── SKILL.md                    # Manifest + fluxo principal (lido pelo Claude)
 ├── README.md                   # Este ficheiro (para humanos)
-├── LICENSE                     # Proprietary (All Rights Reserved)
 ├── .gitignore
 ├── reference/                  # Documentação on-demand
 │   ├── pipeline.md             # 6 fases (entrada → entrega)
@@ -498,25 +497,25 @@ Se apanhares um bug FFmpeg num cenário não coberto, abre um issue ou PR com o 
 
 ---
 
-## Créditos
+## Autoria
 
-- **[FFmpeg](https://ffmpeg.org)** (LGPL/GPL) — pipeline central de vídeo/áudio
-- **[OpenAI Whisper](https://github.com/openai/whisper)** (MIT) — transcrição
-- **[MediaPipe](https://github.com/google-ai-edge/mediapipe)** (Apache 2.0, Google) — face detection para reframe
-- **[RNNoise models](https://github.com/GregorR/rnnoise-models)** (CC-BY) — `cb.rnnn` para denoise
-- **[OpenCV](https://opencv.org)** (Apache 2.0) — I/O de frames no smart-reframe
+**videokit** foi concebido, arquitetado e desenvolvido por **Antonio Costa Lopes** em 2026.
 
----
+© 2026 Antonio Costa Lopes.
 
-## Licença
-
-**Proprietário — All Rights Reserved** — ver [LICENSE](LICENSE).
-
-Este código é publicado para visualização (portfólio, transparência, fins educativos), mas **não concede licença de uso, modificação ou redistribuição**. Para licenciar o videokit ou partes dele, abre uma [issue no GitHub](https://github.com/antoniocostalopes/video-Kit/issues).
+Este repositório não declara uma licença pública. O código é da autoria do autor e está sujeito ao copyright automático aplicável (Convenção de Berna). Para discutir uso, abre uma [issue](https://github.com/antoniocostalopes/video-Kit/issues).
 
 ### Componentes de terceiros
 
-Modelos descarregados em runtime (FFmpeg, OpenAI Whisper, MediaPipe BlazeFace, RNNoise, OpenCV) mantêm as **suas próprias licenças** e não são cobertos por esta licença proprietária. Os scripts da skill nunca incluem nem redistribuem os modelos `cb.rnnn` (CC-BY) e `blaze_face_short_range.tflite` (Apache 2.0) — são `gitignored` e descarregados localmente a partir das fontes oficiais pelos helpers `scripts/download-assets.ps1` e `scripts/smart-reframe.py` na primeira utilização.
+O videokit é um orquestrador que invoca ferramentas externas. Estas ferramentas mantêm as suas próprias licenças e termos de uso — não são redistribuídas por este repositório (são instaladas/descarregadas localmente por ti ou pelos helpers da skill na primeira utilização):
+
+- **FFmpeg** — LGPL/GPL ([ffmpeg.org/legal.html](https://ffmpeg.org/legal.html))
+- **OpenAI Whisper** — MIT
+- **MediaPipe BlazeFace** — Apache 2.0 (Google, modelo `.tflite` descarregado em runtime)
+- **RNNoise** modelo `cb.rnnn` — Creative Commons Attribution 4.0 (CC-BY 4.0), por GregorR ([github.com/GregorR/rnnoise-models](https://github.com/GregorR/rnnoise-models)) — atribuição mantida por força da CC-BY
+- **OpenCV** — Apache 2.0
+
+Os scripts `download-assets.ps1` e `smart-reframe.py` descarregam os modelos diretamente das fontes oficiais. Os ficheiros `cb.rnnn` e `blaze_face_short_range.tflite` estão `.gitignored` — nunca passam por este repositório.
 
 ---
 
