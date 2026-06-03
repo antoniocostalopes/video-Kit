@@ -47,7 +47,11 @@ def main():
     ap.add_argument("--smooth-window", type=int, default=15,
                     help="Janela do moving average para suavizar tracking")
     ap.add_argument("--vertical-offset", type=float, default=0.0,
-                    help="Desloca crop verticalmente (-1.0 = topo, 0 = centro, 1.0 = fundo)")
+                    help="Desloca crop verticalmente (-1.0 = topo, 0 = centro, 1.0 = fundo). Ignorado se --vertical-tracking ativo.")
+    ap.add_argument("--vertical-tracking", action="store_true",
+                    help="Trackear Y tambem (segue cara verticalmente). Default off (Y fixo).")
+    ap.add_argument("--face-position", default="upper-third", choices=["center", "upper-third", "two-thirds"],
+                    help="Onde posicionar a cara no crop. upper-third (default talking head), center, two-thirds (cara em baixo).")
     args = ap.parse_args()
 
     try:
@@ -100,14 +104,21 @@ def main():
         crop_w = src_w
         crop_h = int(round(crop_w * ah / aw))
 
-    # Y fixo (sem tracking vertical neste MVP), com offset opcional
+    # Position fixo (fallback se --vertical-tracking off)
     base_y = (src_h - crop_h) // 2
-    crop_y = max(0, min(src_h - crop_h, base_y + int(args.vertical_offset * crop_h / 4)))
+    fixed_crop_y = max(0, min(src_h - crop_h, base_y + int(args.vertical_offset * crop_h / 4)))
 
     output_sizes = {"9:16": (1080, 1920), "1:1": (1080, 1080), "4:5": (1080, 1350)}
     out_w, out_h = output_sizes[args.target_aspect]
 
-    print(f"Crop window: {crop_w}x{crop_h} a partir de (variavel, {crop_y})")
+    # Onde colocar a cara dentro do crop (em fracao da altura do crop)
+    face_position_map = {"upper-third": 0.33, "center": 0.5, "two-thirds": 0.66}
+    face_target_y_frac = face_position_map[args.face_position]
+
+    print(f"Crop window: {crop_w}x{crop_h}")
+    print(f"Vertical tracking: {'ON' if args.vertical_tracking else 'OFF (Y fixo)'}")
+    if args.vertical_tracking:
+        print(f"Face target position: {args.face_position} ({face_target_y_frac:.2f} da altura do crop)")
     print(f"Output: {out_w}x{out_h}")
 
     # --- Pass 1: detetar caras ---
@@ -131,8 +142,10 @@ def main():
 
     print("Pass 1: detetando caras...")
     face_centers_x = []
+    face_centers_y = []
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     last_x = src_w / 2.0
+    last_y = src_h / 2.0
     idx = 0
     detections_count = 0
 
@@ -149,8 +162,10 @@ def main():
                 best = max(result.detections, key=lambda d: d.categories[0].score if d.categories else 0)
                 bb = best.bounding_box
                 last_x = bb.origin_x + bb.width / 2.0
+                last_y = bb.origin_y + bb.height / 2.0
                 detections_count += 1
         face_centers_x.append(last_x)
+        face_centers_y.append(last_y)
         idx += 1
         if idx % 300 == 0:
             print(f"  {idx}/{total}", flush=True)
@@ -162,14 +177,27 @@ def main():
     if detections_count == 0:
         print("AVISO: nenhuma cara detetada. Usando crop centrado.")
 
-    # Suaviza
-    smoothed = smooth_positions(face_centers_x, window=args.smooth_window)
-    half_crop = crop_w / 2.0
+    # Suaviza X
+    smoothed_x = smooth_positions(face_centers_x, window=args.smooth_window)
+    half_crop_w = crop_w / 2.0
     crop_xs = []
-    for cx in smoothed:
-        x = int(round(cx - half_crop))
+    for cx in smoothed_x:
+        x = int(round(cx - half_crop_w))
         x = max(0, min(src_w - crop_w, x))
         crop_xs.append(x)
+
+    # Suaviza Y (so se vertical_tracking ativado)
+    if args.vertical_tracking:
+        smoothed_y = smooth_positions(face_centers_y, window=args.smooth_window)
+        # face deve aparecer em face_target_y_frac do crop
+        offset_y_in_crop = crop_h * face_target_y_frac
+        crop_ys = []
+        for cy in smoothed_y:
+            y = int(round(cy - offset_y_in_crop))
+            y = max(0, min(src_h - crop_h, y))
+            crop_ys.append(y)
+    else:
+        crop_ys = [fixed_crop_y] * len(crop_xs)
 
     # --- Pass 2: render via ffmpeg pipe ---
     print("Pass 2: encoding...", flush=True)
@@ -212,7 +240,8 @@ def main():
             if not ret:
                 break
             cx = crop_xs[idx] if idx < len(crop_xs) else crop_xs[-1]
-            cropped = frame[crop_y:crop_y + crop_h, cx:cx + crop_w]
+            cy = crop_ys[idx] if idx < len(crop_ys) else crop_ys[-1]
+            cropped = frame[cy:cy + crop_h, cx:cx + crop_w]
             resized = cv2.resize(cropped, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
             try:
                 ff.stdin.write(resized.tobytes())

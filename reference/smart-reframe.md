@@ -63,12 +63,30 @@ Janela do moving average. Default 15 frames (~0.5s em 30fps).
 
 ### `--vertical-offset` (-1 a 1)
 
-Desloca verticalmente o crop:
+Desloca verticalmente o crop estaticamente (usado só com `--vertical-tracking` OFF):
 - `0` (default): centrado verticalmente
 - `-0.5`: empurra para cima (útil quando a cara está no terço superior — talking head típico)
 - `0.5`: empurra para baixo (útil quando a cara está no terço inferior)
 
 Cálculo: offset multiplica `crop_h / 4` em pixels, somado a `(src_h - crop_h) / 2`.
+
+### `--vertical-tracking` (flag, novo)
+
+Ativa tracking dinâmico de Y (a cara é seguida verticalmente além de horizontalmente). Útil quando o orador:
+- Se levanta / senta durante o vídeo
+- Se inclina muito (head movement vertical)
+- Mexe-se entre dois pontos no enquadramento
+
+Quando ativo, `--vertical-offset` é ignorado (a posição é calculada dinamicamente). A janela de smoothing aplica-se também a Y.
+
+### `--face-position` (com `--vertical-tracking`)
+
+Onde colocar a cara dentro do crop quando vertical tracking está ON:
+- `upper-third` (default) — terço superior do crop. Bom para talking head (espaço para legendas/conteúdo)
+- `center` — meio do crop
+- `two-thirds` — dois terços abaixo (raro, mas útil para conteúdo onde a cara aparece em pé)
+
+Implementação: face center y é colocada em `crop_h * face_target_y_frac` do topo do crop.
 
 ## Casos de uso
 

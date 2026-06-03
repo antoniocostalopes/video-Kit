@@ -190,13 +190,27 @@ Depois do primeiro render, modo iteração — toca só no afetado:
 
 ## Funcionalidades extra (opt-in por pedido)
 
-Além do pipeline base (corte + legendas + motion graphics), a skill expõe três packs opcionais que o utilizador pode invocar diretamente ou que ficam configurados no `client-style.md`:
+Além do pipeline base (corte + legendas + motion graphics), a skill expõe vários packs opcionais que o utilizador pode invocar diretamente ou que ficam configurados no `client-style.md`:
 
-- **Pack áudio** (`scripts/audio-process.ps1`): denoise (RNNoise), normalize EBU R128 (-14 LUFS YouTube, -16 Reels, -13 TikTok), compressor de voz, de-esser, mistura com música de fundo + ducking automático. Trigger: `"limpa o áudio"`, `"normaliza o som"`, `"mete uma música de fundo"`. Detalhe em `reference/audio-pack.md`.
+### Audio/Visual base (FFmpeg puro, sem deps adicionais)
 
-- **Pack visual** (`scripts/visual-effects.ps1`): 40+ transições xfade entre clips, aplicação de LUTs `.cube` (5 incluídos: identity, warm, cool, cinematic, bw), color grading com vignette + film grain. Trigger: `"aplica um look cinematográfico"`, `"transição suave aqui"`, `"adiciona grain"`. Detalhe em `reference/visual-effects.md`.
+- **Pack áudio** (`scripts/audio-process.{ps1,sh}`): denoise (RNNoise), normalize EBU R128 (-14 LUFS YouTube, -16 Reels, -13 TikTok), compressor de voz, de-esser, mistura com música de fundo + ducking automático. Trigger: `"limpa o áudio"`, `"normaliza o som"`, `"mete uma música de fundo"`. Detalhe em `reference/audio-pack.md`.
 
-- **Smart reframe 16:9 → 9:16** (`scripts/smart-reframe.py`): converte vídeo horizontal em vertical (ou 1:1, 4:5) seguindo o orador via MediaPipe Face Detection. Trigger: `"faz versão para Reels"`, `"converte para vertical"`, `"versão Stories"`. Detalhe em `reference/smart-reframe.md`. Requer `pip install mediapipe opencv-python` (auto-instalado se em falta — pede ao utilizador para autorizar).
+- **Pack visual** (`scripts/visual-effects.{ps1,sh}`): 40+ transições xfade entre clips, aplicação de LUTs `.cube` (13 incluídos: identity, warm, cool, cinematic, bw, pastel, vintage, noir, vibrant, faded, golden-hour, teal-cool, high-contrast), color grading com vignette + film grain. Trigger: `"aplica um look cinematográfico"`, `"transição suave aqui"`, `"adiciona grain"`. Detalhe em `reference/visual-effects.md`.
+
+- **Smart reframe 16:9 → 9:16** (`scripts/smart-reframe.py`): converte vídeo horizontal em vertical (ou 1:1, 4:5) seguindo o orador via MediaPipe Face Detection. Suporta tracking só X (default) ou X+Y com `--vertical-tracking`. Trigger: `"faz versão para Reels"`, `"converte para vertical"`, `"versão Stories"`. Requer `pip install mediapipe opencv-python`.
+
+### Audio/Visual avançado (deps adicionais — instalar conforme uso)
+
+- **Diarização** (`scripts/diarize.py`): identifica quem fala quando (`SPEAKER_00`, `SPEAKER_01`, ...). Trigger: `"quem fala em cada parte?"`, `"podcast com 2 oradores"`, `"legendas com nome do orador"`. Requer `pip install pyannote.audio torch` + `HF_TOKEN`. Detalhe em `reference/diarization.md`.
+
+- **Tradução de legendas** (`scripts/translate-subtitles.py`): traduz ASS/SRT entre línguas (PT/EN/ES/FR/IT/DE...) offline via argos-translate. Trigger: `"traduz legendas para inglês"`, `"versão para espanhol"`. Requer `pip install argostranslate`. Detalhe em `reference/translation.md`.
+
+- **TTS narração** (`scripts/narrate.py`): síntese de voz neural local via Piper. Vozes PT-PT (tugão), PT-BR (faber/edresson), EN-US (amy/lessac), etc. Trigger: `"gera narração para este texto"`, `"voz a ler isto"`. Requer `pip install piper-tts`. Detalhe em `reference/tts.md`.
+
+- **Separação de áudio** (`scripts/separate-audio.py`): Demucs separa vocals/drums/bass/other. Útil para remover música pré-existente, isolar voz para karaoke real, ou substituir música de fundo. Trigger: `"remove a música do vídeo"`, `"isola só a voz"`, `"karaoke instrumental"`. Requer `pip install demucs torch`. Detalhe em `reference/audio-separation.md`.
+
+- **Background removal** (`scripts/remove-bg.py`): remove fundo sem greenscreen via rembg/U²-Net. Modos: alpha (compositing), replace (imagem/cor), blur (look webcam). Trigger: `"remove o fundo"`, `"fundo blur"`, `"troca fundo por imagem"`. Requer `pip install rembg opencv-python`. Detalhe em `reference/background-removal.md`.
 
 ## Resumo: como o utilizador usa a skill
 

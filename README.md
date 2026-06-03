@@ -27,11 +27,16 @@ Dás-lhe um vídeo. Ele transcreve, corta silêncios e fillers, gera legendas, a
 | **Transcrição** | Whisper local (default, offline, gratuito) ou OpenAI/ElevenLabs API |
 | **Corte automático** | Remove silêncios >0.5s, fillers PT (`ahn`, `tipo`, `né`) e EN (`um`, `like`) |
 | **Legendas queimadas** | 3 estilos ASS: `full`, `karaoke` (word-by-word), `highlights` |
-| **LUTs e color grading** | 5 LUTs procedurais (warm/cool/cinematic/bw/identity) + vignette + film grain |
+| **LUTs e color grading** | 13 LUTs procedurais (warm/cool/cinematic/bw/pastel/vintage/noir/vibrant/faded/golden-hour/teal-cool/high-contrast/identity) + vignette + film grain |
 | **Transições** | 40+ via FFmpeg `xfade` (fade, slide, wipe, circleopen, dissolve...) |
 | **Áudio profissional** | Denoise RNNoise + normalize EBU R128 + compressor + ducking de música |
-| **Reframe 16:9 → 9:16** | Tracking de cara via MediaPipe BlazeFace (também 1:1 e 4:5) |
+| **Reframe 16:9 → 9:16** | Tracking de cara via MediaPipe BlazeFace, agora também tracking vertical (1:1, 4:5, 9:16) |
 | **Motion graphics** | Title cards e lower thirds HTML com alpha |
+| **Diarização** | pyannote-audio identifica `SPEAKER_00`, `SPEAKER_01`... para legendas com nome de orador |
+| **Tradução de legendas** | argos-translate PT↔EN/ES/FR/IT/DE (ASS e SRT) offline |
+| **TTS narração** | Piper local: vozes PT-PT (tugão), PT-BR (faber), EN-US/GB, ES, FR |
+| **Separação de áudio** | Demucs separa vocals/drums/bass/other — para remover música, isolar voz, karaoke |
+| **Background removal** | rembg/U²-Net sem greenscreen — modos alpha, replace, blur |
 | **Verificação obrigatória** | Checklist booleano + extração ≥6 frames antes de declarar "pronto" |
 
 ---

@@ -27,11 +27,16 @@ You give it a video. It transcribes, cuts silences and fillers, generates subtit
 | **Transcription** | Whisper local (default, offline, free) or OpenAI/ElevenLabs API |
 | **Auto-cut** | Removes silences >0.5s, fillers in PT (`ahn`, `tipo`, `né`) and EN (`um`, `like`) |
 | **Burned-in subtitles** | 3 ASS styles: `full`, `karaoke` (word-by-word), `highlights` |
-| **LUTs and color grading** | 5 procedural LUTs (warm/cool/cinematic/bw/identity) + vignette + film grain |
+| **LUTs and color grading** | 13 procedural LUTs (warm/cool/cinematic/bw/pastel/vintage/noir/vibrant/faded/golden-hour/teal-cool/high-contrast/identity) + vignette + film grain |
 | **Transitions** | 40+ via FFmpeg `xfade` (fade, slide, wipe, circleopen, dissolve...) |
 | **Professional audio** | RNNoise denoise + EBU R128 normalize + compressor + music ducking |
-| **16:9 → 9:16 reframe** | Face tracking via MediaPipe BlazeFace (also 1:1 and 4:5) |
+| **16:9 → 9:16 reframe** | Face tracking via MediaPipe BlazeFace with X+Y tracking option (also 1:1 and 4:5) |
 | **Motion graphics** | HTML title cards and lower thirds with alpha |
+| **Diarization** | pyannote-audio identifies `SPEAKER_00`, `SPEAKER_01`... for speaker-labeled subtitles |
+| **Subtitle translation** | argos-translate PT↔EN/ES/FR/IT/DE (ASS and SRT) offline |
+| **TTS narration** | Piper local: voices PT-PT (tugão), PT-BR (faber), EN-US/GB, ES, FR |
+| **Audio separation** | Demucs separates vocals/drums/bass/other — remove music, isolate voice, karaoke |
+| **Background removal** | rembg/U²-Net without greenscreen — alpha, replace, blur modes |
 | **Mandatory verification** | Boolean checklist + ≥6 frame extraction before declaring "done" |
 
 ---

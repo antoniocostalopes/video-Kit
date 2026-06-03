@@ -8,6 +8,23 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 
 ## [Unreleased]
 
+### Audio/Visual avançado (7 novos scripts + extensões)
+
+- **`scripts/diarize.py`** — Diarização via pyannote-audio. Identifica `SPEAKER_00`, `SPEAKER_01`... Integra com transcript para legendas com nome do orador. Requer HF_TOKEN.
+- **`scripts/translate-subtitles.py`** — Tradução de legendas ASS/SRT entre línguas (PT/EN/ES/FR/IT/DE...) offline via argos-translate.
+- **`scripts/narrate.py`** — TTS local Piper. Vozes PT-PT, PT-BR, EN-US/UK, ES, FR descarregadas sob demanda.
+- **`scripts/separate-audio.py`** — Separação de áudio via Demucs (vocals/drums/bass/other ou two-stems vocals+no_vocals).
+- **`scripts/remove-bg.py`** — Background removal sem greenscreen via rembg/U²-Net. Modos alpha/replace/blur.
+- **`scripts/smart-reframe.py`** — adicionado `--vertical-tracking` (segue cara em Y também) + `--face-position` (upper-third/center/two-thirds).
+- **`scripts/gen-luts.py`** — 8 novos LUTs procedurais: pastel, vintage, noir, vibrant, faded, golden-hour, teal-cool, high-contrast. Total: 13 LUTs.
+
+### Reference docs (5 novos)
+- `reference/diarization.md`
+- `reference/translation.md`
+- `reference/tts.md`
+- `reference/audio-separation.md`
+- `reference/background-removal.md`
+
 ### Quick wins
 - Bash equivalents (.sh) dos scripts PowerShell — paridade macOS/Linux
 - `CHANGELOG.md` + `CONTRIBUTING.md`

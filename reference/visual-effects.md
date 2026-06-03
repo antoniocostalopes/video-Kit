@@ -92,11 +92,28 @@ Combinar é OK: aplicar LUT primeiro, depois vignette + grain por cima.
 
 ### LUTs incluídos (em `assets/luts/`)
 
-- **identity.cube** — sem efeito (baseline para testes)
-- **warm.cube** — golden hour, sunset (tons quentes, azuis suavizados)
-- **cool.cube** — winter, tech (cyans/blues empurrados, vermelhos suavizados)
-- **cinematic.cube** — teal-orange clássico de cinema (shadows teal, highlights orange, S-curve de contraste)
-- **bw.cube** — preto e branco com contraste suave
+13 LUTs procedurais (gerados via `gen-luts.py`):
+
+| LUT | Descrição | Bom para |
+|---|---|---|
+| `identity.cube` | sem efeito (baseline) | testes |
+| `warm.cube` | golden hour, sunset | lifestyle, viagem |
+| `cool.cube` | winter, tech | corporate, tecnologia |
+| `cinematic.cube` | teal-orange clássico de cinema | promos, trailers |
+| `bw.cube` | B&W com contraste suave | documentário |
+| `pastel.cube` | tons suaves, baixa saturação | wellness, food |
+| `vintage.cube` | sepia, fade nos pretos | retro, nostálgico |
+| `noir.cube` | B&W alto contraste com tint azul | thriller |
+| `vibrant.cube` | saturação alta + S-curve | energético, gaming |
+| `faded.cube` | blacks levantados, dessaturado | Instagram filter |
+| `golden-hour.cube` | quentes intensos, magic hour | contemplative |
+| `teal-cool.cube` | frios saturados, modern tech | tech reviews |
+| `high-contrast.cube` | bold blacks, saturação | desporto, ação |
+
+Cada LUT ~134KB. Para regenerar (após edição de `gen-luts.py`):
+```bash
+python scripts/gen-luts.py
+```
 
 ### Exemplos
 
