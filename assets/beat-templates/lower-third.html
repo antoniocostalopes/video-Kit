@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<title>lower-third</title>
+<!--
+  Template: lower-third (faixa inferior com nome + cargo)
+  Placeholders:
+    __VIDEO_W__    largura em px
+    __VIDEO_H__    altura em px
+    __PRIMARY__    cor principal hex
+    __FONT__       google fonts family
+    __NAME__       nome a mostrar
+    __ROLE__       cargo / contexto (pode ser '')
+    __POSITION__   'left' | 'right' | 'center' (default left)
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=__FONT__:wght@400;500;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: __PRIMARY__;
+    --font: "__FONT__", system-ui, sans-serif;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: __VIDEO_W__px;
+    height: __VIDEO_H__px;
+    background: transparent !important;
+    overflow: hidden;
+    font-family: var(--font);
+  }
+
+  .third {
+    position: absolute;
+    bottom: 7%;
+    left: 5%;
+    max-width: 60%;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.82);
+    border-left: 6px solid var(--primary);
+    padding: 18px 32px 18px 24px;
+    border-radius: 0 8px 8px 0;
+    opacity: 0;
+    transform: translateX(-32px);
+    animation: in 520ms 100ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .third.right {
+    left: auto;
+    right: 5%;
+    border-left: none;
+    border-right: 6px solid var(--primary);
+    border-radius: 8px 0 0 8px;
+    transform: translateX(32px);
+  }
+
+  .third.center {
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    border-left: none;
+    border-bottom: 6px solid var(--primary);
+    border-radius: 8px;
+  }
+  .third.center.in { transform: translateX(-50%) translateY(0); }
+
+  .name {
+    font-size: 44px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+
+  .role {
+    margin-top: 4px;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--primary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .role:empty { display: none; }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  @keyframes in {
+    to { opacity: 1; transform: translateX(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="third __POSITION__">
+    <div class="text">
+      <div class="name">__NAME__</div>
+      <div class="role">__ROLE__</div>
+    </div>
+  </div>
+</body>
+</html>

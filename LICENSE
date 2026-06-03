@@ -1,0 +1,32 @@
+MIT License
+
+Copyright (c) 2026 Antonio Costa Lopes
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This MIT license covers the source code of videokit (SKILL.md, reference/, scripts/, assets/templates and LUTs, etc.).
+
+Third-party models downloaded at runtime by `scripts/download-assets.ps1` and `scripts/smart-reframe.py` retain their own licenses:
+
+- RNNoise `cb.rnnn` — Creative Commons Attribution 4.0 International (CC-BY 4.0). Source: https://github.com/GregorR/rnnoise-models
+- MediaPipe BlazeFace `blaze_face_short_range.tflite` — Apache License 2.0. Source: Google MediaPipe (https://github.com/google-ai-edge/mediapipe).
+
+These model files are NOT redistributed by this repository. They are downloaded on demand from official upstream sources and stored locally in `assets/audio-models/` and `assets/face-detector/` (both gitignored).

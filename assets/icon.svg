@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="videokit logo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded background -->
+  <rect x="0" y="0" width="200" height="200" rx="36" fill="url(#bg)"/>
+
+  <!-- Film strip top -->
+  <rect x="20" y="40" width="160" height="14" fill="#0B1224"/>
+  <g fill="#E2E8F0">
+    <rect x="28" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="48" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="68" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="88" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="108" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="128" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="148" y="43" width="10" height="8" rx="1.5"/>
+    <rect x="162" y="43" width="10" height="8" rx="1.5"/>
+  </g>
+
+  <!-- Film strip bottom -->
+  <rect x="20" y="146" width="160" height="14" fill="#0B1224"/>
+  <g fill="#E2E8F0">
+    <rect x="28" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="48" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="68" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="88" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="108" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="128" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="148" y="149" width="10" height="8" rx="1.5"/>
+    <rect x="162" y="149" width="10" height="8" rx="1.5"/>
+  </g>
+
+  <!-- Frame body -->
+  <rect x="32" y="58" width="136" height="84" rx="6" fill="#0B1224"/>
+
+  <!-- Play triangle -->
+  <polygon points="82,78 82,122 122,100" fill="url(#accent)"/>
+
+  <!-- Small AI dot (top right corner accent) -->
+  <circle cx="170" cy="30" r="6" fill="#60A5FA"/>
+  <circle cx="170" cy="30" r="3" fill="#FFFFFF"/>
+</svg>

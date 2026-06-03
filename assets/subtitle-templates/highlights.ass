@@ -1,0 +1,31 @@
+[Script Info]
+; Template: highlights (so palavras-chave grandes e impactantes)
+; Placeholders: __PLAY_RES_X__ __PLAY_RES_Y__ __PRIMARY__ __FONT__ __FONT_SIZE_BIG__
+; Skill seleciona 8-12 highlights do transcript: numeros, %, nomes proprios, palavras enfaticas.
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: __PLAY_RES_X__
+PlayResY: __PLAY_RES_Y__
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+; Style 1: highlight grande centrado, primary color sobre outline preto forte
+Style: Highlight,__FONT__,__FONT_SIZE_BIG__,&H00FFFFFF,__PRIMARY__,&H00000000,&H00000000,-1,0,0,0,100,100,4,0,1,8,0,5,40,40,0,1
+; Style 2: highlight com cor de marca
+Style: Brand,__FONT__,__FONT_SIZE_BIG__,__PRIMARY__,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,4,0,1,8,0,5,40,40,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+; Alignment=5 = centro vertical+horizontal (middle of screen)
+; Animacao pop-in com {\fad(100,150)} ou {\t(0,200,\fscx100\fscy100)\fscx80\fscy80}
+;
+; Exemplos:
+; Dialogue: 0,0:00:08.20,0:00:10.50,Highlight,,0,0,0,,{\fad(120,180)\t(0,250,\fscx100\fscy100)\fscx85\fscy85}3X MAIS LEADS
+; Dialogue: 0,0:00:25.40,0:00:27.80,Brand,,0,0,0,,{\fad(120,180)}50%
+;
+; Regras:
+;   - 1-5 palavras por entry
+;   - Duracao 1.5-3s
+;   - Min 1.5s entre highlights

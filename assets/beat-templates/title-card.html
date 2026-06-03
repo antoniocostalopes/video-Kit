@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<title>title-card</title>
+<!--
+  Template: title-card
+  Placeholders (substituidos pela skill antes de capturar):
+    __VIDEO_W__    largura em px (ex: 1920)
+    __VIDEO_H__    altura em px
+    __PRIMARY__    cor principal hex (ex: #2563EB)
+    __SECONDARY__  cor secundaria
+    __FONT__       google fonts family name (ex: Inter)
+    __TITLE__      texto principal
+    __SUBTITLE__   texto secundario (opcional, '' para esconder)
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=__FONT__:wght@400;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: __PRIMARY__;
+    --secondary: __SECONDARY__;
+    --font: "__FONT__", system-ui, sans-serif;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: __VIDEO_W__px;
+    height: __VIDEO_H__px;
+    background: transparent !important;
+    overflow: hidden;
+    font-family: var(--font);
+    color: white;
+  }
+
+  .stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 8% 10%;
+    box-sizing: border-box;
+  }
+
+  .backdrop {
+    position: absolute;
+    inset: 12% 8%;
+    background: rgba(15, 23, 42, 0.55);
+    border-left: 8px solid var(--primary);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    animation: backdrop-in 400ms 100ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .title {
+    font-weight: 900;
+    font-size: clamp(48px, 7vw, 110px);
+    line-height: 1.05;
+    text-align: center;
+    color: white;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: text-in 500ms 250ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+    text-shadow: 0 4px 24px rgba(0,0,0,0.45);
+  }
+
+  .subtitle {
+    font-weight: 400;
+    font-size: clamp(20px, 2.6vw, 42px);
+    line-height: 1.2;
+    text-align: center;
+    color: var(--primary);
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: text-in 450ms 450ms forwards cubic-bezier(0.16, 1, 0.3, 1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  @keyframes backdrop-in {
+    to { opacity: 1; }
+  }
+  @keyframes text-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Auto-hide subtitle se vazio */
+  .subtitle:empty { display: none; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="backdrop"></div>
+    <h1 class="title">__TITLE__</h1>
+    <p class="subtitle">__SUBTITLE__</p>
+  </div>
+</body>
+</html>

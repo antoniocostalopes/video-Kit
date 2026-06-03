@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime state (gerado por scripts em cada maquina)
+cache/env-report.json
+cache/test-*
+cache/*.log
+cache/*.tmp
+
+# Modelos descarregados em runtime (download-assets.ps1 + smart-reframe.py)
+assets/audio-models/*.rnnn
+assets/face-detector/*.tflite
+
+# Config do utilizador (privado)
+styles/client-style.md
+brand/logo/*
+!brand/logo/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
+
+# Outputs de testes locais
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+!assets/**/*.mp4
+!assets/**/*.mov

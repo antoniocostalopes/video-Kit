@@ -1,0 +1,21 @@
+[Script Info]
+; Template: completas (1-2 linhas centradas em baixo)
+; Placeholders: __PLAY_RES_X__ __PLAY_RES_Y__ __PRIMARY__ __SECONDARY__ __FONT__ __FONT_SIZE__
+; Cores ASS em formato &HBBGGRR (alpha-blue-green-red) — converter de hex RGB ao escrever.
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: __PLAY_RES_X__
+PlayResY: __PLAY_RES_Y__
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,__FONT__,__FONT_SIZE__,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,4,2,2,80,80,80,1
+Style: Highlight,__FONT__,__FONT_SIZE__,__PRIMARY__,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,4,2,2,80,80,80,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+; Dialogue lines geradas dinamicamente pela skill a partir de transcripts/clean.json:
+; Dialogue: 0,0:00:00.50,0:00:03.20,Default,,0,0,0,,Texto da legenda aqui
+; Para destacar uma palavra: usar inline override {\c__PRIMARY__\b1}palavra{\r}

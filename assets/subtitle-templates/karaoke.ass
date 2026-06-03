@@ -1,0 +1,27 @@
+[Script Info]
+; Template: karaoke (word-by-word, palavra ativa em cor de destaque)
+; Placeholders: __PLAY_RES_X__ __PLAY_RES_Y__ __PRIMARY__ __FONT__ __FONT_SIZE__
+; Usar com word_timestamps do Whisper. Cada Dialogue agrupa 2-3 palavras com tags {\k<cs>}.
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: __PLAY_RES_X__
+PlayResY: __PLAY_RES_Y__
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+; PrimaryColour = palavra ja dita (branco). SecondaryColour = palavra a ser dita (cor de destaque).
+Style: Karaoke,__FONT__,__FONT_SIZE__,&H00FFFFFF,__PRIMARY__,&H00000000,&H80000000,-1,0,0,0,100,100,2,0,1,5,2,2,60,60,140,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+; Exemplo (gerar dinamicamente):
+; Dialogue: 0,0:00:05.12,0:00:07.45,Karaoke,,0,0,0,,{\k22}Ola {\k15}pessoal {\k30}hoje
+;
+; Regras:
+;   - Cada {\k<centisecs>} = tempo ate transicao para proxima palavra
+;   - Soma dos {\k} = (End - Start) em centisecs
+;   - Start[i+1] >= End[i] (sem sobreposicao)
+;   - Max 4 palavras por linha em 16:9 / 1:1
+;   - Max 3 palavras por linha em 9:16
