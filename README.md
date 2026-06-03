@@ -66,18 +66,23 @@ Dás-lhe um vídeo. Ele transcreve, corta silêncios e fillers, gera legendas, a
 
 ### Pré-requisitos
 
-| Ferramenta | Para quê | Como instalar |
-|---|---|---|
-| **Claude Code** | Runtime da skill | [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code) |
-| **FFmpeg 8.x** com libass | Pipeline de vídeo/áudio | `winget install Gyan.FFmpeg` (Win) / `brew install ffmpeg` (mac) |
-| **Python 3.12+** | Scripts de transcrição, corte, smart-reframe | `winget install Python.Python.3.13` (Win) / `brew install python` (mac) |
-| **Node.js 22+** (opcional) | HyperFrames para motion graphics avançado | `winget install OpenJS.NodeJS.LTS` |
+**A skill pode instalar tudo automaticamente** via `bootstrap.{ps1,sh}` (ver Passo 4). Para referência:
 
-Pacotes Python (instalados sob demanda pela skill):
+| Ferramenta | Para quê | Como instalar (manual) | Auto pela skill? |
+|---|---|---|---|
+| **Claude Code** | Runtime da skill | [docs.anthropic.com](https://docs.anthropic.com/en/docs/claude-code) | ❌ chicken-and-egg |
+| **FFmpeg 8.x** com libass | Pipeline de vídeo/áudio | `winget install Gyan.FFmpeg` (Win) / `brew install ffmpeg` (mac) / `apt install ffmpeg` (Linux) | ✅ via bootstrap |
+| **Python 3.12+** | Scripts de transcrição, corte, smart-reframe | `winget install Python.Python.3.13` (Win) / `brew install python` (mac) | ✅ via bootstrap |
+| **Pacotes pip core** (whisper, mediapipe, opencv) | Pipeline base | `pip install openai-whisper mediapipe opencv-python` | ✅ via bootstrap |
+| **Pacotes pip features** (pyannote, demucs, rembg, etc.) | Funcionalidades avançadas | `pip install <pacote>` | ✅ via install-feature |
+| **Node.js 22+** (opcional) | HyperFrames para motion graphics avançado | `winget install OpenJS.NodeJS.LTS` | ❌ não usado por defeito |
+
+**Em macOS**, o bootstrap precisa de [Homebrew](https://brew.sh) instalado previamente (chicken-and-egg). Se não tens:
 ```bash
-pip install openai-whisper           # transcrição local (default)
-pip install mediapipe opencv-python  # smart reframe 16:9 → 9:16
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
+
+**Em Linux**, o bootstrap usa `apt` (Debian/Ubuntu). Outras distros (Fedora, Arch, openSUSE) precisam de instalar FFmpeg + Python3 manualmente.
 
 ### Passo 1 — Clonar este repositório
 
@@ -118,9 +123,54 @@ Ou pelo terminal:
 Test-Path "$env:USERPROFILE\.claude\skills\videokit\SKILL.md"  # True
 ```
 
-### Passo 4 — Detect ambiente (automático no 1º uso)
+### Passo 4 — Bootstrap automático (opcional)
 
-Na primeira invocação, a skill corre `scripts/detect-env.ps1` que escreve `cache/env-report.json` com os caminhos do FFmpeg, Python e capacidades disponíveis. Só precisas de garantir que FFmpeg e Python estão no PATH.
+A skill pode **auto-instalar** FFmpeg, Python 3.12+ e os pacotes pip necessários. Se a primeira invocação detetar algo em falta, oferece-se para instalar. Para fazer manualmente:
+
+**Windows (sem admin, via winget):**
+```powershell
+& "$env:USERPROFILE\.claude\skills\videokit\scripts\bootstrap.ps1"
+```
+
+**macOS (precisa Homebrew):**
+```bash
+bash ~/.claude/skills/videokit/scripts/bootstrap.sh
+```
+
+**Linux (Debian/Ubuntu, precisa sudo):**
+```bash
+bash ~/.claude/skills/videokit/scripts/bootstrap.sh
+```
+
+O bootstrap deteta o que já tens e instala só o que falta. Flag `--auto-yes` para skip prompts; `--check-only` para apenas reportar.
+
+### Passo 5 — Detect ambiente (automático no 1º uso)
+
+Após bootstrap, a skill corre `scripts/detect-env.{ps1,sh}` que escreve `cache/env-report.json` com paths do FFmpeg, Python e capacidades disponíveis.
+
+### Feature packs sob demanda
+
+Funcionalidades avançadas (diarização, tradução, TTS, separação de áudio, background removal) são opt-in. A skill pergunta antes de instalar quando pedires uma destas pela primeira vez. Para instalar manualmente:
+
+```powershell
+# Windows
+.\install-feature.ps1 diarization        # ~500MB
+.\install-feature.ps1 translation        # ~150MB
+.\install-feature.ps1 tts                # ~50MB
+.\install-feature.ps1 audio-separation   # ~2GB
+.\install-feature.ps1 bg-removal         # ~250MB
+.\install-feature.ps1 all                # tudo (~5GB)
+```
+
+```bash
+# macOS / Linux
+./install-feature.sh diarization
+./install-feature.sh translation
+./install-feature.sh tts
+./install-feature.sh audio-separation
+./install-feature.sh bg-removal
+./install-feature.sh all
+```
 
 ---
 
@@ -472,7 +522,9 @@ videokit/
 │   ├── audio-separation.md     # Demucs separação stems
 │   ├── background-removal.md   # rembg sem greenscreen
 │   └── lessons-learned.md      # gotchas FFmpeg 8.x, Windows, Whisper
-├── scripts/                    # 23 scripts (7 PS + 7 Bash + 9 Python)
+├── scripts/                    # 27 scripts (9 PS + 9 Bash + 9 Python)
+│   ├── bootstrap.{ps1,sh}      # auto-install FFmpeg + Python + pip core
+│   ├── install-feature.{ps1,sh} # instala pacotes por feature pack
 │   ├── detect-env.{ps1,sh}     # deteta ambiente
 │   ├── init-project.{ps1,sh}   # cria projects/YYYY-MM-DD_slug/
 │   ├── download-assets.{ps1,sh} # busca modelos runtime

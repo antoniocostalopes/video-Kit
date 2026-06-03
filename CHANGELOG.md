@@ -8,6 +8,13 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 
 ## [Unreleased]
 
+### Auto-install de pré-requisitos
+
+- **`scripts/bootstrap.{ps1,sh}`** — instala FFmpeg + Python 3.12+ + pip core packages automaticamente. Windows via winget, macOS via Homebrew, Linux via apt (Debian/Ubuntu). Flags `--auto-yes`, `--check-only`, `--skip-X`.
+- **`scripts/install-feature.{ps1,sh}`** — instala pip packages por feature pack: `core` | `diarization` | `translation` | `tts` | `audio-separation` | `bg-removal` | `all`.
+- SKILL.md ensina o agente a oferecer instalação automática quando deteta deps em falta (pergunta primeiro antes de instalar).
+- README atualizado com tabela mostrando o que é auto-installable e instruções por OS.
+
 ### Audio/Visual avançado (7 novos scripts + extensões)
 
 - **`scripts/diarize.py`** — Diarização via pyannote-audio. Identifica `SPEAKER_00`, `SPEAKER_01`... Integra com transcript para legendas com nome do orador. Requer HF_TOKEN.

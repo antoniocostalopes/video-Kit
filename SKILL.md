@@ -66,6 +66,19 @@ Confirma no fim: `Estilo guardado. Já posso editar os teus vídeos com este loo
 
 Antes da primeira fase do pipeline:
 
+0. **Auto-instalar pré-requisitos se em falta**. Verifica `ffmpeg`, `python3.12+`, e pacotes pip core (whisper, mediapipe, opencv). Se algo em falta:
+   - Avisa o utilizador: `"Detetei que falta X. Posso instalar automaticamente?"`
+   - Se sim, corre:
+     ```powershell
+     # Windows
+     & "$env:USERPROFILE\.claude\skills\videokit\scripts\bootstrap.ps1" -AutoYes
+     ```
+     ```bash
+     # macOS / Linux
+     bash ~/.claude/skills/videokit/scripts/bootstrap.sh --auto-yes
+     ```
+   - Para features adicionais (diarization, translation, tts, audio-separation, bg-removal), corre `install-feature.{ps1,sh} <feature>` quando o utilizador pedir essa funcionalidade pela primeira vez.
+
 1. **Deteta o SO** para fazer routing entre scripts PowerShell (`.ps1`) e Bash (`.sh`):
    - Windows: usar `.ps1` via PowerShell
    - macOS / Linux: usar `.sh` via Bash
@@ -88,6 +101,8 @@ Antes da primeira fase do pipeline:
 
 | Operação | Windows | macOS / Linux |
 |---|---|---|
+| Bootstrap (system + pip core) | `bootstrap.ps1` | `bootstrap.sh` |
+| Install feature pack | `install-feature.ps1 <feature>` | `install-feature.sh <feature>` |
 | Detect env | `detect-env.ps1` | `detect-env.sh` |
 | Init project | `init-project.ps1 -InputVideo X` | `init-project.sh --input X` |
 | Download models | `download-assets.ps1` | `download-assets.sh` |
@@ -98,9 +113,34 @@ Antes da primeira fase do pipeline:
 | Auto-cut | `auto-cut.py` (cross-platform) |
 | Transcribe | `transcribe.py` (cross-platform) |
 | Smart reframe | `smart-reframe.py` (cross-platform) |
+| Diarize | `diarize.py` (cross-platform) |
+| Translate subs | `translate-subtitles.py` (cross-platform) |
+| TTS narration | `narrate.py` (cross-platform) |
+| Audio separation | `separate-audio.py` (cross-platform) |
+| Background removal | `remove-bg.py` (cross-platform) |
 | Gen LUTs | `gen-luts.py` (cross-platform) |
 
 Os scripts Python são cross-platform — invocados via `python3` (Unix) ou `python` (Windows), lê o `python_bin` do `env-report.json`.
+
+### Workflow de auto-install de dependências por feature
+
+Quando o utilizador pede uma feature que precisa de deps adicionais, deteta primeiro se estão instaladas. Se não:
+
+```
+Utilizador: "diariza este podcast"
+Skill: deteta pyannote em falta via `python -c "import pyannote"`
+Skill: "Preciso instalar pyannote.audio + torch (~500MB). Posso?"
+Utilizador: "sim"
+Skill: corre install-feature.ps1 diarization (ou .sh)
+Skill: continua com diarize.py
+```
+
+Pacotes pip por feature:
+- `diarization` → `pyannote.audio` `torch` `torchaudio` (~500MB) + `HF_TOKEN` env var
+- `translation` → `argostranslate` (~150MB + ~100MB por par de línguas)
+- `tts` → `piper-tts` (~50MB + ~50-100MB por voz)
+- `audio-separation` → `demucs` `torch` `torchaudio` (~2GB)
+- `bg-removal` → `rembg` `opencv-python` `pillow` (~250MB)
 
 ## Criar projeto para um vídeo
 
