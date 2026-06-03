@@ -317,7 +317,7 @@ Se apanhares um bug FFmpeg num cenário não coberto, abre um issue ou PR com o 
 
 **Proprietário — All Rights Reserved** — ver [LICENSE](LICENSE).
 
-Este código é publicado para visualização (portfólio, transparência, fins educativos), mas **não concede licença de uso, modificação ou redistribuição**. Para licenciar o videokit ou partes dele, contacta: **antonio@agencycoders.com**.
+Este código é publicado para visualização (portfólio, transparência, fins educativos), mas **não concede licença de uso, modificação ou redistribuição**. Para licenciar o videokit ou partes dele, abre uma [issue no GitHub](https://github.com/antoniocostalopes/video-Kit/issues).
 
 ### Componentes de terceiros
 
