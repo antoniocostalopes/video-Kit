@@ -269,14 +269,21 @@ Cheatsheet do que podes dizer ao Claude em cada fase:
 | **Início** | `corta os silêncios em C:\v.mp4` | Modo `cut-only` |
 | **Início** | `limpa o áudio em C:\v.mp4` | Só pack áudio (denoise + normalize) |
 | **Início** | `versão Reels de C:\v.mp4` | Smart reframe 16:9 → 9:16 |
+| **Início** | `versão Reels com tracking vertical` | Smart reframe X+Y tracking |
+| **Início** | `quem fala em cada parte de C:\podcast.mp4?` | Diarização (SPEAKER_00, SPEAKER_01...) |
+| **Início** | `remove a música do C:\v.mp4` | Demucs separa, fica só voz |
+| **Início** | `remove o fundo do C:\v.mp4 com blur` | rembg modo blur (look webcam) |
+| **Início** | `gera narração para este texto com voz portuguesa` | Piper TTS pt_PT-tugao |
 | **Antes de transcrever** | `usa OpenAI Whisper em vez do local` | Override do transcritor |
-| **Após draft** | `renderiza` | Avança para final |
-| **Após draft** | `está bom` | Equivalente a renderiza |
+| **Após draft** | `renderiza` / `está bom` | Avança para final |
 | **Após draft** | `muda a cor das legendas para vermelho` | Edita ASS + re-render |
 | **Após draft** | `tira o card do início` | Remove beat[0] e re-render |
 | **Após draft** | `acelera 1.1× a partir de 1m30s` | Adiciona setpts em beats_plan |
 | **Após draft** | `também versão 9:16` | Smart reframe pós-final |
-| **Após final** | `aplica look cinematográfico` | LUT cinematic + grade pass |
+| **Após draft** | `traduz as legendas para inglês` | argos-translate ASS → EN |
+| **Após final** | `aplica look cinematográfico` | LUT cinematic + grade |
+| **Após final** | `aplica look pastel` | LUT pastel + grade |
+| **Após final** | `aplica look golden hour` | LUT golden-hour + grade |
 
 ---
 
@@ -345,7 +352,47 @@ Pipeline em modo `full` mas com perfil screencast: legendas discretas (font meno
 edita C:\Videos\promo.mp4 com LUT cinematic, vignette e legendas highlights
 ```
 
-Pipeline + `visual-effects.ps1 -Mode Lut cinematic.cube` + `-Mode Grade -VignetteStrength 0.4 -FilmGrain 4` + legendas highlights nas palavras-chave (números, percentagens, palavras enfáticas) em vez de legendas contínuas.
+Pipeline + LUT cinematic.cube (teal-orange) + vignette + legendas highlights nas palavras-chave.
+
+#### 7. Podcast com 2 oradores e diarização
+
+```
+edita C:\Podcasts\episodio-12.mp4, diariza os 2 oradores e põe legendas com nome
+```
+
+Pipeline cut-only + `diarize.py --num-speakers 2` para identificar SPEAKER_00 e SPEAKER_01. A skill pergunta nomes reais (ex.: "João", "Maria") e gera legendas com prefixo `João: ...` / `Maria: ...`. Requer `pip install pyannote.audio torch` + `HF_TOKEN`.
+
+#### 8. Vídeo multilíngue (legendas em EN/ES/FR)
+
+```
+edita C:\Videos\pitch-pt.mp4 e gera versões com legendas em inglês, espanhol e francês
+```
+
+Pipeline normal em PT. Depois `translate-subtitles.py` traduz `subtitles.ass` para `subtitles_en.ass`, `subtitles_es.ass`, `subtitles_fr.ass`. Pode gerar 3 outputs queimados ou 1 output + 3 SRT externos para upload em YouTube/Vimeo. Requer `pip install argostranslate`.
+
+#### 9. Vídeo com narração TTS gerada
+
+```
+gera narração para o texto em C:\scripts\intro.txt com voz portuguesa, mistura com música C:\music\loop.mp3 e cria vídeo
+```
+
+`narrate.py --text-file intro.txt --voice pt_PT-tugao` gera WAV de voz. `audio-process.sh` mistura com música de fundo + ducking automático. Combinar com B-roll ou frame estático para vídeo final.
+
+#### 10. Webcam-look profissional (background blur)
+
+```
+remove o fundo do C:\Videos\talking.mp4 com blur, mantém qualidade
+```
+
+`remove-bg.py --mode blur --blur-strength 25` aplica gaussian blur ao fundo, isolando o orador. Look "webcam pro" sem greenscreen. Requer `pip install rembg opencv-python`.
+
+#### 11. Substituir música de vídeo
+
+```
+remove a música do C:\Videos\vlog.mp4 e mete C:\music\nova.mp3 com volume baixo
+```
+
+`separate-audio.py --two-stems vocals` extrai voz, descarta música original. `audio-process.sh --music nova.mp3 --music-volume 0.3` mistura voz com nova música + ducking. Requer `pip install demucs torch`.
 
 ---
 
@@ -406,9 +453,12 @@ A skill aceita ambos os estilos — conversação flexível ou slash com flags. 
 ```
 videokit/
 ├── SKILL.md                    # Manifest + fluxo principal (lido pelo Claude)
-├── README.md                   # Este ficheiro (para humanos)
+├── README.md                   # Este ficheiro (PT)
+├── README.en.md                # Versão inglesa
+├── CHANGELOG.md                # Histórico de versões
+├── CONTRIBUTING.md             # PR guidelines
 ├── .gitignore
-├── reference/                  # Documentação on-demand
+├── reference/                  # 13 docs on-demand
 │   ├── pipeline.md             # 6 fases (entrada → entrega)
 │   ├── formats.md              # specs 16:9 / 9:16 / 1:1 / screencast
 │   ├── onboarding.md           # primeira conversa
@@ -416,26 +466,37 @@ videokit/
 │   ├── audio-pack.md           # denoise / loudnorm / ducking
 │   ├── visual-effects.md       # transições / LUTs / grading
 │   ├── smart-reframe.md        # tracking de cara MediaPipe
+│   ├── diarization.md          # quem fala quando (pyannote)
+│   ├── translation.md          # tradução legendas (argos)
+│   ├── tts.md                  # Piper TTS local
+│   ├── audio-separation.md     # Demucs separação stems
+│   ├── background-removal.md   # rembg sem greenscreen
 │   └── lessons-learned.md      # gotchas FFmpeg 8.x, Windows, Whisper
-├── scripts/                    # 11 scripts (7 PowerShell + 4 Python)
-│   ├── detect-env.ps1
-│   ├── init-project.ps1
-│   ├── transcribe.py
-│   ├── auto-cut.py
-│   ├── burn-subtitles.ps1
-│   ├── audio-process.ps1
-│   ├── visual-effects.ps1
-│   ├── smart-reframe.py
-│   ├── render.ps1
-│   ├── download-assets.ps1
-│   └── gen-luts.py
+├── scripts/                    # 23 scripts (7 PS + 7 Bash + 9 Python)
+│   ├── detect-env.{ps1,sh}     # deteta ambiente
+│   ├── init-project.{ps1,sh}   # cria projects/YYYY-MM-DD_slug/
+│   ├── download-assets.{ps1,sh} # busca modelos runtime
+│   ├── burn-subtitles.{ps1,sh} # queima ASS
+│   ├── audio-process.{ps1,sh}  # denoise + normalize + ducking
+│   ├── visual-effects.{ps1,sh} # transições / LUT / grade
+│   ├── render.{ps1,sh}         # orquestrador
+│   ├── transcribe.py           # Whisper local + APIs
+│   ├── auto-cut.py             # EDL: silêncios + fillers PT/EN
+│   ├── smart-reframe.py        # MediaPipe face tracking X+Y
+│   ├── diarize.py              # pyannote SPEAKER_NN
+│   ├── translate-subtitles.py  # argos PT↔EN/ES/FR/IT/DE
+│   ├── narrate.py              # Piper TTS multi-língua
+│   ├── separate-audio.py       # Demucs vocals/drums/bass/other
+│   ├── remove-bg.py            # rembg alpha/replace/blur
+│   └── gen-luts.py             # gera 13 LUTs procedurais
 ├── assets/
 │   ├── icon.svg                # logo da skill
 │   ├── subtitle-templates/     # 3 templates .ass
 │   ├── beat-templates/         # 2 templates HTML
-│   ├── luts/                   # 5 LUTs procedurais .cube
+│   ├── luts/                   # 13 LUTs procedurais .cube
 │   ├── audio-models/           # RNNoise .rnnn (download em runtime)
-│   └── face-detector/          # BlazeFace .tflite (download em runtime)
+│   ├── face-detector/          # BlazeFace .tflite (download em runtime)
+│   └── voice-models/           # Piper .onnx (download em runtime)
 └── cache/                      # env-report.json (estado local, gitignored)
 ```
 
@@ -479,14 +540,27 @@ Apagar `2026-06-03_pitch/` apaga tudo desse vídeo. O source original mantém-se
 
 Funcionalidades planeadas (PRs bem-vindas):
 
-- [ ] **Diarização** (`pyannote-audio`) — legendas com `Orador 1: / Orador 2:`
-- [ ] **Tradução de legendas** (`NLLB-200`) — multi-língua local
 - [ ] **B-roll automático** via Pexels API — keywords da transcrição → vídeos de stock
 - [ ] **Chapter markers** automáticos — YouTube chapters file
-- [ ] **TTS local** (`Piper` / `Coqui TTS`) — narração PT-PT / PT-BR
 - [ ] **Stable Diffusion thumbnails** — frame + título overlay automático
-- [ ] **Bash scripts** para macOS/Linux (parity com `.ps1`)
 - [ ] **Hook detection** — primeiros 3-5s mais fortes para auto-trim Reels
+- [ ] **GPU end-to-end** — NVENC + Whisper.cpp + CUDA OpenCV (10× speedup)
+- [ ] **Multi-format auto-export** — 1 source → YouTube 16:9 + Reels 9:16 + Square 1:1 em paralelo
+- [ ] **Auto-thumbnail** com frame + título overlay
+- [ ] **Watch folder mode** — daemon que monitoriza pasta e processa novos vídeos
+- [ ] **Pyannote refinamento** — diarização com voice samples por orador (nome real)
+- [ ] **NLLB-200** alternativa ao argos-translate (200 línguas, qualidade superior)
+
+### Já implementado nesta versão
+
+- ✅ **Diarização** (`pyannote-audio`) — `scripts/diarize.py` com SPEAKER_NN
+- ✅ **Tradução de legendas** (argos-translate) — `scripts/translate-subtitles.py`
+- ✅ **TTS local** (Piper) — `scripts/narrate.py` com vozes PT-PT/PT-BR/EN/ES/FR
+- ✅ **Bash scripts** macOS/Linux — paridade completa com `.ps1`
+- ✅ **Demucs** separação de áudio — `scripts/separate-audio.py`
+- ✅ **Background removal** (rembg) — `scripts/remove-bg.py`
+- ✅ **Tracking vertical** smart-reframe — flag `--vertical-tracking`
+- ✅ **+8 LUTs procedurais** — total 13 LUTs incluídos
 
 ---
 
