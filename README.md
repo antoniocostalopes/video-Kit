@@ -310,7 +310,6 @@ Se apanhares um bug FFmpeg num cenário não coberto, abre um issue ou PR com o 
 - **[MediaPipe](https://github.com/google-ai-edge/mediapipe)** (Apache 2.0, Google) — face detection para reframe
 - **[RNNoise models](https://github.com/GregorR/rnnoise-models)** (CC-BY) — `cb.rnnn` para denoise
 - **[OpenCV](https://opencv.org)** (Apache 2.0) — I/O de frames no smart-reframe
-- Inspirado por [LeMousk/video-edit-kit](https://github.com/LeMousk/video-edit-kit) — arquitetura de pipeline e disciplina de "lessons learned"
 
 ---
 
