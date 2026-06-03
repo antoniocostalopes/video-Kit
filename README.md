@@ -7,7 +7,7 @@
 
   Transcrição com Whisper · Corte automático · Legendas burned-in · Motion graphics · LUTs cinematográficos · Reframe 16:9 → 9:16 com tracking de cara
 
-  [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+  [![License: Proprietary](https://img.shields.io/badge/license-Proprietary-DC2626.svg)](LICENSE)
   [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-7C3AED.svg)](https://docs.anthropic.com/en/docs/claude-code)
   [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.x-007808.svg)](https://ffmpeg.org)
   [![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB.svg)](https://python.org)
@@ -161,7 +161,7 @@ O Claude:
 videokit/
 ├── SKILL.md                    # Manifest + fluxo principal (lido pelo Claude)
 ├── README.md                   # Este ficheiro (para humanos)
-├── LICENSE                     # MIT
+├── LICENSE                     # Proprietary (All Rights Reserved)
 ├── .gitignore
 ├── reference/                  # Documentação on-demand
 │   ├── pipeline.md             # 6 fases (entrada → entrega)
@@ -316,9 +316,13 @@ Se apanhares um bug FFmpeg num cenário não coberto, abre um issue ou PR com o 
 
 ## Licença
 
-MIT — ver [LICENSE](LICENSE).
+**Proprietário — All Rights Reserved** — ver [LICENSE](LICENSE).
 
-Modelos descarregados em runtime mantêm as suas próprias licenças (RNNoise CC-BY, BlazeFace Apache 2.0). Os scripts da skill nunca incluem nem redistribuem esses modelos — são `gitignored` e descarregados localmente pelos helpers `scripts/download-assets.ps1` e `scripts/smart-reframe.py` na primeira utilização.
+Este código é publicado para visualização (portfólio, transparência, fins educativos), mas **não concede licença de uso, modificação ou redistribuição**. Para licenciar o videokit ou partes dele, contacta: **antonio@agencycoders.com**.
+
+### Componentes de terceiros
+
+Modelos descarregados em runtime (FFmpeg, OpenAI Whisper, MediaPipe BlazeFace, RNNoise, OpenCV) mantêm as **suas próprias licenças** e não são cobertos por esta licença proprietária. Os scripts da skill nunca incluem nem redistribuem os modelos `cb.rnnn` (CC-BY) e `blaze_face_short_range.tflite` (Apache 2.0) — são `gitignored` e descarregados localmente a partir das fontes oficiais pelos helpers `scripts/download-assets.ps1` e `scripts/smart-reframe.py` na primeira utilização.
 
 ---
 
