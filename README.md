@@ -117,41 +117,280 @@ Na primeira invocação, a skill corre `scripts/detect-env.ps1` que escreve `cac
 
 ---
 
-## Uso
+## Como usar — passo a passo
 
-### Pipeline completo (default)
+### Visão geral do pipeline
 
+```mermaid
+flowchart TD
+    A[Vídeo source<br/>ex: C:\Downloads\pitch.mp4] --> B[Fase 0<br/>init-project.ps1<br/>cria projects/YYYY-MM-DD_slug/]
+    B --> C[Fase 1<br/>transcribe.py<br/>Whisper → transcripts/clean.json]
+    C --> D[Fase 2<br/>auto-cut.py<br/>EDL: silêncios + fillers]
+    D --> E[Fase 3<br/>plano motion graphics<br/>beats_plan.json]
+    E --> F[Fase 4<br/>queimar legendas<br/>+ efeitos + overlays]
+    F --> G[renders/draft/draft.mp4<br/>+ 6 frames extraídos]
+    G --> H{Tu dizes 'renderiza'?}
+    H -->|Sim| I[Fase 5<br/>render final<br/>preset slow + CRF 18]
+    H -->|Iterar| J[Editas EDL ou beats_plan.json]
+    J --> F
+    I --> K[Fase 6<br/>verificação obrigatória<br/>checklist + frames]
+    K --> L[final.mp4<br/>entregue ao lado do source]
+
+    style A fill:#1e3a8a,color:#fff
+    style L fill:#16a34a,color:#fff
+    style H fill:#f59e0b,color:#000
 ```
-edita este vídeo C:\Downloads\pitch.mp4
-```
 
-O Claude:
-1. Cria `C:\Downloads\videokit-projects\2026-06-03_pitch\` com subpastas
-2. Transcreve (Whisper local)
-3. Corta silêncios e fillers (gera EDL editável)
-4. Queima legendas se pediste (full/karaoke/highlights)
-5. Aplica motion graphics (opcional)
-6. Mostra draft + 6 frames de revisão
-7. Pelo teu `renderiza`, gera `renders/final/final.mp4`
+---
 
-### Modos rápidos
+### Primeira utilização — onboarding (5 minutos, uma vez)
 
-| Pedido | O que faz | Modo |
+Quando invocas a skill pela primeira vez, ela não tem ainda a tua identidade visual definida. Faz 7 perguntas — uma de cada vez — e guarda em `~/.claude/skills/videokit/styles/client-style.md`. Essa config aplica-se a todos os vídeos futuros.
+
+Exemplo de sessão:
+
+> **Tu:** `configura o videokit para a minha marca`
+>
+> **Claude:** Vou criar o teu perfil de marca. Primeira pergunta — qual a cor principal da tua marca? Podes dar o hex (`#2563EB`), o nome (`azul`, `vermelho`...) ou `default`.
+>
+> **Tu:** `#2563EB`
+>
+> **Claude:** E uma cor secundária para acentos?
+>
+> **Tu:** `default`
+>
+> **Claude:** Que estilo de edição preferes? `minimalista` / `dinâmico` / `corporativo` / `educativo` — default é `minimalista`.
+>
+> **Tu:** `dinâmico`
+>
+> **Claude:** Onde costumas aparecer no enquadramento? `centro` / `direita` / `esquerda` — default `centro`.
+>
+> **Tu:** `centro`
+>
+> **Claude:** Tens logo? Se sim, indica caminho absoluto. Se não, diz `não`.
+>
+> **Tu:** `não`
+>
+> **Claude:** Estilo default de legendas: `completas` / `karaoke` / `highlights` / `sem`.
+>
+> **Tu:** `karaoke`
+>
+> **Claude:** Transcritor preferido: `Whisper local` / `OpenAI` / `ElevenLabs`. Default `Whisper local`.
+>
+> **Tu:** `Whisper local`
+>
+> **Claude:** Estilo guardado. Já posso editar os teus vídeos com este look. Quando quiseres editar, passa-me o caminho do vídeo: `edita C:\caminho\para\video.mp4`.
+
+Pronto. Não precisas voltar a fazer isto.
+
+---
+
+### Sessão típica — edição completa
+
+Vamos editar um vídeo real. Conversa concreta:
+
+> **Tu:** `edita este vídeo C:\Downloads\pitch-ia.mp4`
+>
+> **Claude:** Vou criar o projeto. Antes de começar:
+>
+> 1. Estilo de legendas para **este** vídeo (default do teu perfil é karaoke): mantém ou outro?
+> 2. Modo: `full` (com motion graphics) ou `cut-only`?
+> 3. Algum contexto que precise saber? (termos técnicos, foco, audiência)
+>
+> **Tu:** `karaoke, full, é um pitch sobre agentes de IA com termos "MCP", "embedding", "RAG"`
+>
+> **Claude:**
+> ```
+> A executar detect-env.ps1...
+> ffmpeg: 8.1 ✓  ffprobe ✓  Whisper instalado ✓
+>
+> A criar C:\Downloads\videokit-projects\2026-06-03_pitch-ia\
+> Source detetado: 1920×1080 @ 30fps, 4m12s, 16:9
+>
+> Fase 1/6 — A extrair áudio e transcrever (modelo medium, ~2min)...
+> ✓ 87 segmentos, 1124 palavras (PT detetado)
+>
+> Fase 2/6 — A analisar para corte automático...
+> ✓ Silêncios detetados: 23 (12.4s removidos)
+> ✓ Fillers detetados: 41 ("tipo", "ahn", "né"...)
+> ✓ Duração final: 3m26s (corte de 46s, 18%)
+>
+> Fase 3/6 — A planear motion graphics...
+> ✓ 5 beats: 1 title card + 2 lower thirds + 2 highlights
+> ✓ 2 efeitos zoompan (aos 1m12s e 2m48s)
+>
+> Fase 4/6 — A queimar legendas karaoke e aplicar overlays...
+> Fase 5/6 — A gerar draft (~1min, preset ultrafast)...
+>
+> ✓ Draft pronto: C:\Downloads\videokit-projects\2026-06-03_pitch-ia\renders\draft\draft.mp4
+> ✓ 6 frames extraídos para verify/
+>
+> Olha o draft e diz 'renderiza' para final, ou pede ajustes.
+> ```
+>
+> **Tu:** *(vês o draft)* `o zoom aos 2m48s está exagerado, baixa para 1.15× e renderiza final`
+>
+> **Claude:**
+> ```
+> A ajustar beats_plan.json.video_effects[id=vfx02].max_zoom: 1.25 → 1.15
+> A regenerar a partir da fase 4 (preset slow, ~3min)...
+>
+> Fase 6/6 — Verificação...
+> ✓ Duração: 3m26s
+> ✓ Áudio presente (-14 LUFS)
+> ✓ Codec h264, yuv420p, 1920×1080
+> ✓ Legendas sincronizadas (amostragem em 0:30, 1:45, 3:00)
+> ✓ Zoom em 2m48s confirmado em frames de verify/
+>
+> Pronto. Entrega:
+> 📁 C:\Downloads\videokit-projects\2026-06-03_pitch-ia\renders\final\final.mp4
+> ⏱️ 3m26s · 1920×1080 · 87 MB
+> 📸 6 frames de revisão em verify/
+> ```
+
+Está feito. Ficheiro final ao lado do teu source original. Apaga a pasta `2026-06-03_pitch-ia/` quando já não precisares.
+
+---
+
+### Comandos durante a sessão
+
+Cheatsheet do que podes dizer ao Claude em cada fase:
+
+| Quando | O que dizes | Efeito |
 |---|---|---|
-| `edita este vídeo X` | Pipeline completo | `full` |
-| `corta os ahn em X` | Só corte + legendas | `cut-only` |
-| `limpa o áudio de X` | Denoise + normalize + compressor (FFmpeg puro) | audio-only |
-| `põe legendas karaoke em X` | Pipeline com legendas word-by-word | `full` |
-| `versão Reels de X` | Smart reframe 16:9 → 9:16 (precisa mediapipe) | reframe |
-| `aplica look cinematográfico em X` | LUT cinematic.cube (teal-orange) | grade |
+| **Início** | `edita C:\v.mp4` | Pipeline completo `full` |
+| **Início** | `corta os silêncios em C:\v.mp4` | Modo `cut-only` |
+| **Início** | `limpa o áudio em C:\v.mp4` | Só pack áudio (denoise + normalize) |
+| **Início** | `versão Reels de C:\v.mp4` | Smart reframe 16:9 → 9:16 |
+| **Antes de transcrever** | `usa OpenAI Whisper em vez do local` | Override do transcritor |
+| **Após draft** | `renderiza` | Avança para final |
+| **Após draft** | `está bom` | Equivalente a renderiza |
+| **Após draft** | `muda a cor das legendas para vermelho` | Edita ASS + re-render |
+| **Após draft** | `tira o card do início` | Remove beat[0] e re-render |
+| **Após draft** | `acelera 1.1× a partir de 1m30s` | Adiciona setpts em beats_plan |
+| **Após draft** | `também versão 9:16` | Smart reframe pós-final |
+| **Após final** | `aplica look cinematográfico` | LUT cinematic + grade pass |
 
-### Flags via slash command
+---
+
+### Como iterar depois do primeiro render
+
+Depois do primeiro render, mudanças visuais são **rápidas** porque só re-rendes o que mudou. A skill toca só no afetado:
+
+| Pedido | O que muda | Tempo extra |
+|---|---|---|
+| `muda cor das legendas para verde` | `edit/subtitles.ass` → re-queima | ~30s |
+| `põe o lower-third aos 45s em vez de 30s` | `beats_plan.json` timestamp → recompõe overlay | ~30s |
+| `tira o zoom aos 2m48s` | `beats_plan.json.video_effects` remove → re-render base | ~1min |
+| `corta também o segmento dos 1m20s aos 1m25s` | `edit/edl.json` segments_keep → re-cut → re-render | ~3min (re-faz desde fase 2) |
+| `aplica LUT warm em vez de cinematic` | re-corre `visual-effects.ps1 -Mode Lut` | ~1min |
+| `também versão 9:16 deste final` | `smart-reframe.py` pós-final | ~3min (1080p 1min source) |
+
+A skill **avisa-te** quando uma mudança implica re-correr fases anteriores (especialmente cortes — os timestamps a jusante deslocam).
+
+---
+
+### Cenários por tipo de vídeo
+
+#### 1. Talking head para YouTube longo (16:9)
+
+```
+edita C:\Videos\episode-03.mp4 com legendas completas e look corporativo
+```
+
+A skill cria 16:9 1920×1080, legendas brancas com outline preto nas zonas seguras, lower thirds discretos, áudio normalizado a -14 LUFS (target YouTube), sem efeitos agressivos.
+
+#### 2. Reel/Short de Instagram (9:16)
+
+```
+edita C:\Videos\hook.mp4 com legendas karaoke e versão Reels
+```
+
+A skill faz o pipeline em 16:9, depois corre smart-reframe para 9:16 1080×1920. Legendas word-by-word grandes (font-size ~110px), áudio normalizado a -16 LUFS (Instagram), max 2-3 palavras por linha.
+
+#### 3. Limpeza rápida sem motion graphics
+
+```
+corta os silêncios e os "tipo" em C:\Videos\raw.mov, sem motion graphics
+```
+
+Cut-only mode. Só EDL + concat + (opcional) legendas. Sem cards, sem overlays. Ideal para podcasts vídeo, entrevistas longas, conteúdo onde o corte é o que importa.
+
+#### 4. Podcast — pack áudio standalone
+
+```
+limpa o áudio em C:\Audio\episode.mp4 e normaliza a -16 LUFS para podcast
+```
+
+Sem pipeline de vídeo. Só: denoise RNNoise + de-esser + compressor + EBU R128 a -16 LUFS (target Apple Podcasts/Spotify). Output mantém o vídeo intacto (`-c:v copy`), só re-encode áudio.
+
+#### 5. Screencast / tutorial
+
+```
+edita C:\Videos\demo.mp4, é um tutorial de código, mete zoom nas demos
+```
+
+Pipeline em modo `full` mas com perfil screencast: legendas discretas (font menor, canto inferior, não tapam UI), zoom subtil (1.15-1.2×) em momentos de demo, sem cards laterais (UI pode esconder).
+
+#### 6. Look cinematográfico para promo
+
+```
+edita C:\Videos\promo.mp4 com LUT cinematic, vignette e legendas highlights
+```
+
+Pipeline + `visual-effects.ps1 -Mode Lut cinematic.cube` + `-Mode Grade -VignetteStrength 0.4 -FilmGrain 4` + legendas highlights nas palavras-chave (números, percentagens, palavras enfáticas) em vez de legendas contínuas.
+
+---
+
+### Onde ver o resultado
+
+Quando a skill diz `Pronto. Entrega:` segue o path indicado. Estrutura típica:
+
+```
+C:\Downloads\
+├── pitch-ia.mp4                                  ← teu source original (intacto)
+└── videokit-projects\
+    └── 2026-06-03_pitch-ia\
+        ├── source\pitch-ia.mp4                   ← cópia local
+        ├── transcripts\
+        │   ├── raw.json                          ← saída crua do Whisper
+        │   └── clean.json                        ← formato canónico
+        ├── edit\
+        │   ├── edl.json                          ← edita aqui para mudar cortes
+        │   ├── subtitles.ass                     ← edita aqui para mudar legendas
+        │   └── segments\seg_001.mp4 ...          ← cada segmento cortado
+        ├── overlays\b01.mov, b02.mov, ...        ← motion graphics com alpha
+        ├── renders\
+        │   ├── draft\draft.mp4                   ← preview rápido
+        │   └── final\final.mp4                   ⬅ ENTREGA
+        ├── verify\
+        │   ├── frame_1.000.png                   ← controlo
+        │   ├── frame_51.500.png                  ← meio
+        │   ├── frame_pico_zoom_2m48s.png         ← pico do efeito
+        │   └── ...                                ← ≥6 frames
+        ├── cache\                                 ← temporários (apagáveis)
+        ├── project.json                          ← estado completo
+        ├── beats_plan.json                       ← plano de motion graphics
+        └── notes.md                              ← decisões e exceções
+```
+
+Apaga a pasta `2026-06-03_pitch-ia/` para limpar tudo desse vídeo. O teu source em `Downloads\` mantém-se intacto.
+
+---
+
+### Flags via slash command (alternativa à conversação)
+
+Se preferires comando direto em vez de conversa:
 
 ```
 /videokit C:\v.mp4 --mode cut-only --subs karaoke
+/videokit C:\v.mp4 --mode full --subs highlights
+/videokit C:\v.mp4 --mode cut-only --subs sem
 ```
 
 `argument-hint` no SKILL.md declara: `<caminho-absoluto-do-video> [--mode full|cut-only] [--subs full|karaoke|highlights|sem]`.
+
+A skill aceita ambos os estilos — conversação flexível ou slash com flags. Em ambos, podes interagir durante a sessão para iterar.
 
 ---
 
@@ -217,50 +456,6 @@ C:\Downloads\
 ```
 
 Apagar `2026-06-03_pitch/` apaga tudo desse vídeo. O source original mantém-se intacto.
-
----
-
-## Exemplos completos
-
-### 1. Talking head para YouTube longo
-
-```
-edita este vídeo C:\Videos\episode-03.mp4 com legendas completas
-```
-
-Corte de fillers + legendas brancas em baixo + motion graphics ligeiros + áudio normalizado a -14 LUFS (YouTube).
-
-### 2. Reel de Instagram com karaoke
-
-```
-versão Reels de C:\Videos\hook.mp4 com legendas karaoke
-```
-
-Smart reframe 16:9 → 9:16 (1080×1920) + legendas word-by-word grandes + áudio normalizado a -16 LUFS (Instagram).
-
-### 3. Limpeza rápida sem motion graphics
-
-```
-corta os silêncios e os "tipo" em C:\Videos\raw.mov
-```
-
-Cut-only mode — só EDL + segmentos cortados + concatenação. Sem legendas, sem efeitos, sem motion graphics.
-
-### 4. Áudio standalone para podcast
-
-```
-limpa o áudio de C:\Audio\episode.mp4 e normaliza para podcast
-```
-
-Denoise RNNoise + compressor + EBU R128 a -16 LUFS (Apple Podcasts).
-
-### 5. Look cinematográfico
-
-```
-edita C:\Videos\promo.mp4 com look cinematográfico e legendas highlights
-```
-
-Pipeline + LUT cinematic.cube (teal-orange) + vignette + legendas highlights nas palavras-chave.
 
 ---
 
