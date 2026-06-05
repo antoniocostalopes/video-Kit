@@ -81,12 +81,11 @@ def ensure_voice(voice_id: str, models_dir: Path):
 
 def synthesize(text: str, voice_onnx: Path, output_wav: Path):
     """Sintetiza texto -> WAV usando Piper."""
-    try:
-        import wave
-        from piper import PiperVoice
-    except ImportError:
-        print("ERRO: piper-tts nao instalado. Corre: pip install piper-tts", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("tts", ["piper"])
+    import wave
+    from piper import PiperVoice
 
     print(f"A carregar Piper voice {voice_onnx.name}...")
     voice = PiperVoice.load(str(voice_onnx))

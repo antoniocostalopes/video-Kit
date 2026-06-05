@@ -30,6 +30,7 @@ param(
     [ValidateSet("cut","subs","effects","overlays","all","verify")][string]$Phase = "all",
     [ValidateSet("draft","final")][string]$Quality = "draft",
     [switch]$CleanCache,
+    [ValidateSet("none","auto","nvenc","videotoolbox","qsv","amf")][string]$Hwaccel = "none",
     [string]$WorkspaceDir = (Split-Path -Parent $PSScriptRoot)
 )
 
@@ -49,6 +50,7 @@ if (-not (Test-Path $envReportPath)) {
 $env = Get-Content $envReportPath -Raw | ConvertFrom-Json
 $ffmpegBin = $env.ffmpeg_bin
 $ffprobeBin = $env.ffprobe_bin
+$pythonBin = if ($env.python_bin) { $env.python_bin } else { "python" }
 
 $projectJsonPath = Join-Path $ProjectDir "project.json"
 $project = Get-Content $projectJsonPath -Raw | ConvertFrom-Json
@@ -76,11 +78,18 @@ function Invoke-Ffmpeg {
 }
 
 function Get-VideoCodecArgs([string]$q) {
-    if ($q -eq "draft") {
-        return @("-c:v","libx264","-preset","ultrafast","-crf","28","-pix_fmt","yuv420p")
-    } else {
-        return @("-c:v","libx264","-preset","slow","-crf","18","-pix_fmt","yuv420p","-movflags","+faststart")
+    # Delega para hwaccel.py — conhece libx264, NVENC, VideoToolbox, QSV, AMF
+    $hwaccelScript = Join-Path $PSScriptRoot "hwaccel.py"
+    $output = & $pythonBin $hwaccelScript --quality $q --hwaccel $Hwaccel 2>$null
+    if (-not $output) {
+        Write-Warning "hwaccel.py nao devolveu args. A usar libx264 software como fallback."
+        if ($q -eq "draft") {
+            return @("-c:v","libx264","-preset","ultrafast","-crf","28","-pix_fmt","yuv420p")
+        } else {
+            return @("-c:v","libx264","-preset","slow","-crf","18","-pix_fmt","yuv420p","-movflags","+faststart")
+        }
     }
+    return ($output -split '\s+' | Where-Object { $_ -ne "" })
 }
 
 function Update-ProjectField([string]$Field, $Value) {

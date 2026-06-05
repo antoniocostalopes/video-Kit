@@ -12,6 +12,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 
+# shellcheck source=_lib.sh
+. "$SCRIPT_DIR/_lib.sh"
+
 # --- Defaults ---
 INPUT_VIDEO=""
 OUTPUT_DIR=""
@@ -56,16 +59,9 @@ esac
 
 # --- Env report ---
 ENV_REPORT="$SKILL_DIR/cache/env-report.json"
-if [[ ! -f "$ENV_REPORT" ]]; then
-    echo "env-report.json nao existe. A correr detect-env.sh..."
-    "$SCRIPT_DIR/detect-env.sh"
-    if [[ ! -f "$ENV_REPORT" ]]; then
-        echo "ERRO: detect-env falhou. Abortar." >&2
-        exit 1
-    fi
-fi
+require_env_report "$ENV_REPORT"
 
-FFPROBE_BIN="$(grep -oE '"ffprobe_bin": "[^"]*"' "$ENV_REPORT" | sed 's/"ffprobe_bin": "//;s/"$//')"
+FFPROBE_BIN="$(read_json "$ENV_REPORT" ffprobe_bin)"
 if [[ -z "$FFPROBE_BIN" || ! -x "$FFPROBE_BIN" ]]; then
     echo "ERRO: ffprobe_bin invalido em env-report.json: '$FFPROBE_BIN'" >&2
     exit 1
@@ -81,17 +77,29 @@ case "$EXT_LOWER" in
     *) echo "ERRO: extensao '$EXT' nao suportada. Use mp4/mov/mkv/webm/avi/m4v/mts." >&2; exit 1 ;;
 esac
 
-# Audio stream + duration
+# Audio stream + duration (parsing robusto via Python)
 PROBE_JSON="$("$FFPROBE_BIN" -v error \
     -show_entries stream=codec_type:format=duration \
     -of json "$INPUT_VIDEO" 2>&1 || true)"
 
-if ! echo "$PROBE_JSON" | grep -q '"codec_type": "audio"'; then
+eval "$(echo "$PROBE_JSON" | python3 - <<'PYEOF'
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print("HAS_AUDIO=0"); print("DURATION="); sys.exit(0)
+has_audio = 1 if any(s.get("codec_type") == "audio" for s in d.get("streams", [])) else 0
+dur = (d.get("format", {}) or {}).get("duration", "")
+print(f"HAS_AUDIO={has_audio}")
+print(f"DURATION='{dur}'")
+PYEOF
+)"
+
+if [[ "${HAS_AUDIO:-0}" -eq 0 ]]; then
     echo "AVISO: video nao tem stream de audio. Transcricao impossivel."
 fi
 
-DURATION="$(echo "$PROBE_JSON" | grep -oE '"duration": "[^"]*"' | head -n1 | sed 's/.*"duration": "//;s/"$//')"
-if [[ -n "$DURATION" ]]; then
+if [[ -n "${DURATION:-}" ]]; then
     DURATION_INT="${DURATION%.*}"
     if (( DURATION_INT < 1 )); then
         echo "ERRO: duracao $DURATION s muito curta (min 1s)." >&2
@@ -183,18 +191,44 @@ MEDIA_JSON="$("$FFPROBE_BIN" -v error \
     -show_entries stream=width,height,r_frame_rate,codec_name:format=duration:stream_side_data=rotation \
     -of json "$SOURCE_DEST")"
 
-WIDTH="$(echo "$MEDIA_JSON" | grep -oE '"width": [0-9]+' | head -n1 | grep -oE '[0-9]+')"
-HEIGHT="$(echo "$MEDIA_JSON" | grep -oE '"height": [0-9]+' | head -n1 | grep -oE '[0-9]+')"
-CODEC="$(echo "$MEDIA_JSON" | grep -oE '"codec_name": "[^"]*"' | head -n1 | sed 's/"codec_name": "//;s/"$//')"
-FPS_FRAC="$(echo "$MEDIA_JSON" | grep -oE '"r_frame_rate": "[^"]*"' | head -n1 | sed 's/"r_frame_rate": "//;s/"$//')"
-DURATION="$(echo "$MEDIA_JSON" | grep -oE '"duration": "[^"]*"' | head -n1 | sed 's/.*"duration": "//;s/"$//')"
-ROTATION="$(echo "$MEDIA_JSON" | grep -oE '"rotation": -?[0-9]+' | head -n1 | grep -oE '\-?[0-9]+' || echo "0")"
-[[ -z "$ROTATION" ]] && ROTATION=0
+# Parsing robusto via Python (lida com side_data_list vazio, paths Windows, etc.)
+eval "$(echo "$MEDIA_JSON" | python3 - <<'PYEOF'
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception as e:
+    print(f"echo 'ERRO: ffprobe devolveu JSON invalido: {e}' >&2", file=sys.stderr)
+    sys.exit(1)
 
-# Calcular fps via bc ou awk
-FPS_NUM="${FPS_FRAC%/*}"
-FPS_DEN="${FPS_FRAC#*/}"
-FPS="$(awk -v n="$FPS_NUM" -v d="$FPS_DEN" 'BEGIN { printf "%.3f", n/d }')"
+if not d.get("streams"):
+    print("echo 'ERRO: video sem stream de video' >&2; exit 1")
+    sys.exit(0)
+
+s = d["streams"][0]
+fmt = d.get("format", {}) or {}
+
+rotation = 0
+for sd in s.get("side_data_list", []) or []:
+    if "rotation" in sd:
+        try: rotation = int(sd["rotation"])
+        except (ValueError, TypeError): pass
+        break
+
+frac = s.get("r_frame_rate", "0/1")
+try:
+    num, den = frac.split("/")
+    fps = round(int(num) / max(int(den), 1), 3)
+except Exception:
+    fps = 0.0
+
+print(f"WIDTH={s.get('width', 0)}")
+print(f"HEIGHT={s.get('height', 0)}")
+print(f"CODEC='{s.get('codec_name', 'unknown')}'")
+print(f"DURATION='{fmt.get('duration', '0')}'")
+print(f"ROTATION={rotation}")
+print(f"FPS={fps}")
+PYEOF
+)"
 
 # Display dims (considerar rotacao)
 case "$ROTATION" in

@@ -12,6 +12,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 
+# shellcheck source=_lib.sh
+. "$SCRIPT_DIR/_lib.sh"
+
 INPUT=""
 OUTPUT=""
 DENOISE=0
@@ -21,6 +24,7 @@ COMPRESS=0
 DEESS=0
 MUSIC=""
 MUSIC_VOLUME="0.25"
+PLATFORM=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -33,9 +37,26 @@ while [[ $# -gt 0 ]]; do
         --deess)        DEESS=1; shift ;;
         --music)        MUSIC="$2"; shift 2 ;;
         --music-volume) MUSIC_VOLUME="$2"; shift 2 ;;
+        --preset)       PLATFORM="$2"; shift 2 ;;
         *)              echo "Argumento desconhecido: $1" >&2; exit 2 ;;
     esac
 done
+
+# --- Aplica preset de plataforma se pedido (sobrescreve --target-lufs) ---
+if [[ -n "$PLATFORM" ]]; then
+    PRESETS_FILE="$SKILL_DIR/assets/platform-presets.json"
+    if [[ -f "$PRESETS_FILE" ]]; then
+        PRESET_LUFS="$(read_json "$PRESETS_FILE" "$PLATFORM.audio.target_lufs")"
+        if [[ -n "$PRESET_LUFS" ]]; then
+            TARGET_LUFS="$PRESET_LUFS"
+            echo "Preset '$PLATFORM' aplicado: target_lufs=$TARGET_LUFS"
+        else
+            echo "AVISO: preset '$PLATFORM' nao encontrado em $PRESETS_FILE. A usar --target-lufs=$TARGET_LUFS." >&2
+        fi
+    else
+        echo "AVISO: $PRESETS_FILE nao existe. A usar --target-lufs=$TARGET_LUFS." >&2
+    fi
+fi
 
 [[ -z "$INPUT"  ]] && { echo "ERRO: --input obrigatorio" >&2; exit 2; }
 [[ -z "$OUTPUT" ]] && { echo "ERRO: --output obrigatorio" >&2; exit 2; }
@@ -44,8 +65,9 @@ done
 
 # --- Env ---
 ENV_REPORT="$SKILL_DIR/cache/env-report.json"
-[[ ! -f "$ENV_REPORT" ]] && "$SCRIPT_DIR/detect-env.sh"
-FFMPEG_BIN="$(grep -oE '"ffmpeg_bin": "[^"]*"' "$ENV_REPORT" | sed 's/"ffmpeg_bin": "//;s/"$//')"
+require_env_report "$ENV_REPORT"
+FFMPEG_BIN="$(read_json "$ENV_REPORT" ffmpeg_bin)"
+[[ -z "$FFMPEG_BIN" || ! -x "$FFMPEG_BIN" ]] && { echo "ERRO: ffmpeg_bin invalido em env-report.json" >&2; exit 1; }
 
 # --- Modelo RNNoise se denoise ---
 MODEL_FOR_FILTER=""

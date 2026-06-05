@@ -110,6 +110,11 @@ Antes da primeira fase do pipeline:
 | Visual effects | `visual-effects.ps1` | `visual-effects.sh` |
 | Burn subs | `burn-subtitles.ps1` | `burn-subtitles.sh` |
 | Render orchestrator | `render.ps1` | `render.sh` |
+| Quick preview (iteração) | `quick-preview.ps1` | `quick-preview.sh` |
+| Batch queue (N vídeos) | `queue.py` (cross-platform) |
+| HW accel resolver | `hwaccel.py` (cross-platform) |
+| Chapters automáticos | `auto-chapters.py` (cross-platform) |
+| Export EDL/FCPXML | `export-edl.py` (cross-platform) |
 | Auto-cut | `auto-cut.py` (cross-platform) |
 | Transcribe | `transcribe.py` (cross-platform) |
 | Smart reframe | `smart-reframe.py` (cross-platform) |
@@ -198,6 +203,11 @@ Lê só o necessário, nesta ordem:
 - `reference/audio-pack.md` — denoise RNNoise, loudnorm EBU R128, ducking de música
 - `reference/visual-effects.md` — transições xfade, LUTs (.cube), color grading, vignette, film grain
 - `reference/smart-reframe.md` — converte 16:9 → 9:16/1:1 com tracking de cara (MediaPipe)
+- `reference/platform-presets.md` — presets `youtube`, `reels`, `tiktok`, `podcast-video`, etc. (LUFS + aspect + subs por plataforma)
+- `reference/chapters.md` — chapters automáticos (silêncios → boundaries, transcript → títulos, embed em MP4 + descrição YouTube)
+- `reference/export.md` — export para Premiere/Resolve/FCP via CMX 3600 EDL ou FCPXML
+- `reference/batch.md` — processar N vídeos numa pasta com `queue.py` (state recovery)
+- `reference/hardware-acceleration.md` — acelerar render com NVENC/VideoToolbox/QSV/AMF (`--hwaccel auto`)
 - `~/.claude/skills/videokit/styles/client-style.md` — identidade visual do utilizador
 - Pastas `videokit-projects/` anteriores (se existirem ao lado do source) — consistência com edições prévias
 
@@ -228,13 +238,15 @@ Depois do primeiro render, modo iteração — toca só no afetado:
 - **Motion graphics**: edita `<projeto>/beats_plan.json` e re-renderiza só os beats afetados.
 - **Cortes diferentes do base**: avisa que timestamps das legendas vão deslocar e pede confirmação antes.
 
+**Quick-preview antes de re-render**: para confirmar um zoom, LUT ou nova legenda sem rodar o pipeline completo, usa `scripts/quick-preview.{ps1,sh} --start X --duration 5 [--with-zoom|--with-lut|--with-subs]`. Gera um clip ~30s-2min em `cache/preview/`. Mostra ao utilizador antes do final.
+
 ## Funcionalidades extra (opt-in por pedido)
 
 Além do pipeline base (corte + legendas + motion graphics), a skill expõe vários packs opcionais que o utilizador pode invocar diretamente ou que ficam configurados no `client-style.md`:
 
 ### Audio/Visual base (FFmpeg puro, sem deps adicionais)
 
-- **Pack áudio** (`scripts/audio-process.{ps1,sh}`): denoise (RNNoise), normalize EBU R128 (-14 LUFS YouTube, -16 Reels, -13 TikTok), compressor de voz, de-esser, mistura com música de fundo + ducking automático. Trigger: `"limpa o áudio"`, `"normaliza o som"`, `"mete uma música de fundo"`. Detalhe em `reference/audio-pack.md`.
+- **Pack áudio** (`scripts/audio-process.{ps1,sh}`): denoise (RNNoise), normalize EBU R128, compressor de voz, de-esser, mistura com música de fundo + ducking automático. Suporta `--preset youtube|reels|tiktok|podcast-video|...` para LUFS por plataforma (ver `reference/platform-presets.md`). Trigger: `"limpa o áudio"`, `"normaliza o som"`, `"mete uma música de fundo"`, `"versão para Reels"`. Detalhe em `reference/audio-pack.md`.
 
 - **Pack visual** (`scripts/visual-effects.{ps1,sh}`): 40+ transições xfade entre clips, aplicação de LUTs `.cube` (13 incluídos: identity, warm, cool, cinematic, bw, pastel, vintage, noir, vibrant, faded, golden-hour, teal-cool, high-contrast), color grading com vignette + film grain. Trigger: `"aplica um look cinematográfico"`, `"transição suave aqui"`, `"adiciona grain"`. Detalhe em `reference/visual-effects.md`.
 

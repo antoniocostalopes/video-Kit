@@ -34,11 +34,18 @@
 .PARAMETER MusicVolume
     Volume base da musica (0.0-1.0). Default 0.25 (~-12dB).
 
+.PARAMETER Preset
+    Nome de plataforma (youtube, youtube-shorts, reels, tiktok, podcast-video, linkedin, twitter-x).
+    Quando passado, sobrescreve TargetLufs com o valor do preset em assets/platform-presets.json.
+
 .PARAMETER WorkspaceDir
     Default: pasta da skill.
 
 .EXAMPLE
     .\audio-process.ps1 -InputFile C:\v\raw.mp4 -OutputFile C:\v\clean.mp4 -Denoise -Normalize -Compress
+
+.EXAMPLE
+    .\audio-process.ps1 -InputFile C:\v\raw.mp4 -OutputFile C:\v\reels.mp4 -Denoise -Normalize -Preset reels
 #>
 
 param(
@@ -51,6 +58,7 @@ param(
     [switch]$Deess,
     [string]$Music = "",
     [double]$MusicVolume = 0.25,
+    [string]$Preset = "",
     [string]$WorkspaceDir = (Split-Path -Parent $PSScriptRoot)
 )
 
@@ -63,6 +71,23 @@ if (-not (Test-Path $envReportPath)) {
 }
 $envReport = Get-Content $envReportPath -Raw | ConvertFrom-Json
 $ffmpegBin = $envReport.ffmpeg_bin
+
+# --- Preset de plataforma (sobrescreve TargetLufs) ---
+if (-not [string]::IsNullOrEmpty($Preset)) {
+    $presetsPath = Join-Path $WorkspaceDir "assets\platform-presets.json"
+    if (Test-Path $presetsPath) {
+        $presets = Get-Content $presetsPath -Raw | ConvertFrom-Json
+        if ($presets.PSObject.Properties.Name -contains $Preset) {
+            $TargetLufs = [double]$presets.$Preset.audio.target_lufs
+            Write-Host "Preset '$Preset' aplicado: target_lufs=$TargetLufs" -ForegroundColor Cyan
+        } else {
+            $available = ($presets.PSObject.Properties.Name -join ", ")
+            Write-Warning "Preset '$Preset' nao existe. Disponiveis: $available. A usar TargetLufs=$TargetLufs."
+        }
+    } else {
+        Write-Warning "$presetsPath em falta. A usar TargetLufs=$TargetLufs."
+    }
+}
 
 # --- Validacao ---
 if (-not (Test-Path $InputFile)) { Write-Error "Input nao existe: $InputFile"; exit 1 }

@@ -325,3 +325,26 @@ Mudanças depois do primeiro render:
 | "Outro estilo de legendas" | `project.json.settings.subtitle_style` + regenera | Fase 4a |
 
 Em cortes adicionais (último caso), avisa o utilizador antes de continuar — todos os timestamps a jusante mudam.
+
+### Quick-preview (antes de re-render completo)
+
+Para confirmar visualmente um efeito (zoom, LUT, novas legendas) sem rodar o pipeline completo, usa `scripts/quick-preview.{ps1,sh}`. Extrai uma janela de 5–15s a partir do melhor input disponível (`edited_subs.mp4` → `edited.mp4` → source), aplica só o efeito pedido, exporta em `-preset ultrafast` para `<projeto>/cache/preview/HHMMSS_<label>.mp4`. Demora normalmente 30s a 2min em vez de 15min.
+
+```powershell
+# Confirmar zoom no momento do "ahn"
+.\scripts\quick-preview.ps1 -ProjectDir <proj> -Start 45 -Duration 6 -WithZoom -ToZoom 1.3 -Label zoom_45s
+
+# Testar LUT cinematográfico antes de o aplicar ao final
+.\scripts\quick-preview.ps1 -ProjectDir <proj> -Start 12 -Duration 8 -WithLut assets\luts\cinematic.cube -LutIntensity 0.7
+
+# Ver como ficam novas legendas (depois de editar edit/subtitles.ass)
+.\scripts\quick-preview.ps1 -ProjectDir <proj> -Start 0 -Duration 10 -WithSubs -Label new_subs
+```
+
+```bash
+./scripts/quick-preview.sh --project-dir <proj> --start 45 --duration 6 --with-zoom --to-zoom 1.3 --label zoom_45s
+./scripts/quick-preview.sh --project-dir <proj> --start 12 --duration 8 --with-lut assets/luts/cinematic.cube --lut-intensity 0.7
+./scripts/quick-preview.sh --project-dir <proj> --start 0  --duration 10 --with-subs --label new_subs
+```
+
+Mostra ao utilizador a preview e só depois faz o re-render completo do final.

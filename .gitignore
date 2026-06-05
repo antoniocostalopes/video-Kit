@@ -29,6 +29,9 @@ desktop.ini
 *.swp
 *~
 
+# Claude Code local settings (per-machine)
+.claude/
+
 # Outputs de testes locais
 *.mp4
 *.mov

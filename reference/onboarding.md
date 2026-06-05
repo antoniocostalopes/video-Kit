@@ -10,7 +10,26 @@ Este ficheiro vive **dentro da skill** (uma vez por utilizador), não na pasta d
 - Sugere defaults razoáveis (com `(default: X)` na pergunta) para o utilizador poder dizer "default" e avançar.
 - Aceita "qualquer", "tu escolhes" — usa o default e regista que foi auto-decidido.
 - Quando o utilizador disser cor por nome (ex.: "azul"), converte para hex razoável (`#2563EB` por exemplo) e mostra.
-- Não pergunes sobre coisas que dá para inferir (resolução, fps — vem de `ffprobe`).
+- Não perguntes sobre coisas que dá para inferir (resolução, fps — vem de `ffprobe`).
+
+## Persistência incremental (state recovery)
+
+**Guarda depois de CADA resposta, não no fim.** O utilizador pode interromper a meio (Ctrl-C, sessão termina, "ok deixa para amanhã") — quando regressar a skill deve **continuar de onde parou**, não recomeçar do zero.
+
+Implementação:
+
+1. Antes da primeira pergunta, escreve um esqueleto em `~/.claude/skills/videokit/styles/client-style.md` com `<!-- onboarding-status: in_progress -->` no topo e os campos vazios (`(pendente)` em cada um).
+2. Após cada resposta, edita só a linha correspondente e regrava o ficheiro.
+3. Quando a sétima resposta for guardada, troca o marcador para `<!-- onboarding-status: complete -->` e remove o disclaimer no topo.
+4. Quando uma nova sessão começa, lê o ficheiro:
+   - Se não existir → começa do zero (pergunta 1).
+   - Se existir com `onboarding-status: complete` → segue para o pipeline normal.
+   - Se existir com `onboarding-status: in_progress` → identifica a primeira linha com `(pendente)` e retoma a partir daí. Diz: `"Encontrei onboarding incompleto. Continuamos onde parámos."`.
+
+Em Windows escreve sempre UTF-8 sem BOM:
+```powershell
+[IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+```
 
 ## Perguntas (ordem)
 
@@ -71,9 +90,10 @@ Default: Whisper local
 
 ## Output: `~/.claude/skills/videokit/styles/client-style.md`
 
-Depois das 7 respostas, escreve em `~/.claude/skills/videokit/styles/client-style.md` (UTF-8 sem BOM). Em Windows, esse path resolve para `C:\Users\<user>\.claude\skills\videokit\styles\client-style.md`. Cria a pasta `styles/` dentro da skill se não existir.
+Estrutura final (depois das 7 respostas). Em Windows resolve para `C:\Users\<user>\.claude\skills\videokit\styles\client-style.md`. Cria a pasta `styles/` se não existir.
 
 ```markdown
+<!-- onboarding-status: complete -->
 # Estilo do cliente
 
 ## Identidade visual
@@ -100,11 +120,54 @@ Depois das 7 respostas, escreve em `~/.claude/skills/videokit/styles/client-styl
 (vazio por agora — atualiza à medida que o utilizador dá feedback)
 ```
 
-Depois confirma:
+### Esqueleto durante o onboarding
+
+Enquanto está incompleto, deve ser:
+
+```markdown
+<!-- onboarding-status: in_progress -->
+<!-- Em curso — não eliminar. A skill retoma da primeira linha com "(pendente)". -->
+# Estilo do cliente
+
+## Identidade visual
+- **Cor principal**: (pendente)
+- **Cor secundária**: (pendente)
+- **Logo**: (pendente)
+
+## Edição
+- **Estilo**: (pendente)
+- **Posição do orador**: (pendente)
+
+## Legendas
+- **Estilo default**: (pendente)
+- **Cor texto**: branco com outline #0F172A
+- **Cor destaque**: (cor principal — preenche quando souberes)
+- **Fonte default**: Inter (16:9, 1:1) / Bebas Neue (9:16)
+
+## Transcrição
+- **Provider default**: (pendente)
+- **Modelo Whisper**: medium
+- **Língua principal**: pt
+
+## Notas adicionais
+(vazio por agora)
+```
+
+## Confirmação final
+
+Só depois da 7ª resposta:
 ```
 Estilo guardado. Já posso editar os teus vídeos com este look.
 Quando quiseres editar, passa-me o caminho do vídeo: "edita C:\caminho\para\video.mp4".
 ```
+
+## Saltar onboarding
+
+Se o utilizador diz `"deixa o default, quero só editar agora"` ou `"vou configurar depois"`:
+1. Cria o `client-style.md` completo com **todos** os defaults (cor #2563EB, secundária #F8FAFC, dinâmico, centro, sem logo, sem legendas, Whisper local).
+2. Marca `<!-- onboarding-status: complete -->`.
+3. Adiciona em `## Notas adicionais`: `"Auto-preenchido a partir de defaults. Atualiza quando quiseres."`.
+4. Continua para o pipeline.
 
 ## Atualizar o client-style.md
 

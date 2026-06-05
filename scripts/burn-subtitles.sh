@@ -10,6 +10,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 
+# shellcheck source=_lib.sh
+. "$SCRIPT_DIR/_lib.sh"
+
 INPUT=""
 SUBTITLES=""
 OUTPUT=""
@@ -34,9 +37,9 @@ done
 
 # --- Env report ---
 ENV_REPORT="$SKILL_DIR/cache/env-report.json"
-[[ ! -f "$ENV_REPORT" ]] && { "$SCRIPT_DIR/detect-env.sh"; }
-
-FFMPEG_BIN="$(grep -oE '"ffmpeg_bin": "[^"]*"' "$ENV_REPORT" | sed 's/"ffmpeg_bin": "//;s/"$//')"
+require_env_report "$ENV_REPORT"
+FFMPEG_BIN="$(read_json "$ENV_REPORT" ffmpeg_bin)"
+[[ -z "$FFMPEG_BIN" || ! -x "$FFMPEG_BIN" ]] && { echo "ERRO: ffmpeg_bin invalido em env-report.json" >&2; exit 1; }
 
 # --- Codec args por preset ---
 if [[ "$PRESET" == "final" ]]; then

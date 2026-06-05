@@ -58,6 +58,21 @@ test_libass_available() {
     "$bin" -hide_banner -filters 2>/dev/null | grep -q subtitles
 }
 
+detect_hw_encoders() {
+    # Devolve string "nvenc=BOOL videotoolbox=BOOL qsv=BOOL amf=BOOL"
+    local bin="$1"
+    local nvenc="false" vt="false" qsv="false" amf="false"
+    if [[ -n "$bin" ]]; then
+        local enc
+        enc="$("$bin" -hide_banner -encoders 2>/dev/null || true)"
+        echo "$enc" | grep -q "h264_nvenc"        && nvenc="true"
+        echo "$enc" | grep -q "h264_videotoolbox" && vt="true"
+        echo "$enc" | grep -q "h264_qsv"          && qsv="true"
+        echo "$enc" | grep -q "h264_amf"          && amf="true"
+    fi
+    echo "$nvenc $vt $qsv $amf"
+}
+
 # --- Detection ---
 
 echo "Detetando ambiente em $WORKSPACE_DIR..."
@@ -78,6 +93,8 @@ test_whisper_installed "$PYTHON_BIN" && WHISPER_INSTALLED="true"
 
 LIBASS_AVAILABLE="false"
 test_libass_available "$FFMPEG_BIN" && LIBASS_AVAILABLE="true"
+
+read -r HW_NVENC HW_VIDEOTOOLBOX HW_QSV HW_AMF <<<"$(detect_hw_encoders "$FFMPEG_BIN")"
 
 # OS detection
 OS_NAME="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -106,6 +123,12 @@ cat > "$CACHE_DIR/env-report.json" <<EOF
   "ffmpeg_version": "$FFMPEG_VERSION",
   "ffprobe_bin": "$FFPROBE_BIN",
   "libass_available": $LIBASS_AVAILABLE,
+  "hw_encoders": {
+    "nvenc": $HW_NVENC,
+    "videotoolbox": $HW_VIDEOTOOLBOX,
+    "qsv": $HW_QSV,
+    "amf": $HW_AMF
+  },
   "python_bin": "$PYTHON_BIN",
   "python_version": "$PYTHON_VERSION",
   "whisper_installed": $WHISPER_INSTALLED,
@@ -134,6 +157,16 @@ if [[ "$LIBASS_AVAILABLE" == "true" ]]; then
     echo "  libass:  disponivel"
 else
     echo "  libass:  NAO disponivel (fallback necessario)"
+fi
+HW_ACTIVE=()
+[[ "$HW_NVENC" == "true" ]]        && HW_ACTIVE+=("NVENC")
+[[ "$HW_VIDEOTOOLBOX" == "true" ]] && HW_ACTIVE+=("VideoToolbox")
+[[ "$HW_QSV" == "true" ]]          && HW_ACTIVE+=("Intel QSV")
+[[ "$HW_AMF" == "true" ]]          && HW_ACTIVE+=("AMD AMF")
+if [[ "${#HW_ACTIVE[@]}" -gt 0 ]]; then
+    echo "  hwaccel: $(IFS=', '; echo "${HW_ACTIVE[*]}")"
+else
+    echo "  hwaccel: nenhum (so software)"
 fi
 echo ""
 echo "Report: $CACHE_DIR/env-report.json"

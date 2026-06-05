@@ -54,15 +54,13 @@ def main():
                     help="Onde posicionar a cara no crop. upper-third (default talking head), center, two-thirds (cara em baixo).")
     args = ap.parse_args()
 
-    try:
-        import cv2
-        import mediapipe as mp
-        from mediapipe.tasks import python as mp_python
-        from mediapipe.tasks.python import vision as mp_vision
-    except ImportError as e:
-        print(f"ERRO: dependencia em falta ({e}).", file=sys.stderr)
-        print("Corre: pip install mediapipe opencv-python", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("core", ["cv2", "mediapipe"])
+    import cv2
+    import mediapipe as mp
+    from mediapipe.tasks import python as mp_python
+    from mediapipe.tasks.python import vision as mp_vision
 
     inp = Path(args.input).resolve()
     out = Path(args.output).resolve()

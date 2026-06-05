@@ -41,14 +41,12 @@ def main():
                     help="cpu (default), cuda (NVIDIA), mps (Apple Silicon)")
     args = ap.parse_args()
 
-    try:
-        import torch
-        from demucs.api import Separator
-        from demucs.apply import apply_model
-    except ImportError as e:
-        print(f"ERRO: dependencia em falta ({e}).", file=sys.stderr)
-        print("Corre: pip install demucs torch", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("audio-separation", ["torch", "demucs"])
+    import torch
+    from demucs.api import Separator
+    from demucs.apply import apply_model
 
     if not args.input.exists():
         print(f"ERRO: input nao existe: {args.input}", file=sys.stderr)

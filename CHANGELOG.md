@@ -8,7 +8,26 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o
 
 ## [Unreleased]
 
-Sem alterações desde v0.1.0.
+### Adicionado — Tier 1 (closing audit gaps)
+- **`scripts/auto-chapters.py`**: gera chapters a partir do transcript (pausas > 1.5s → boundaries, primeiras palavras → títulos). Outputs `chapters.json`, `chapters.ffmetadata` (embed MP4 via `-map_metadata`), `chapters.youtube.txt` e `chapters.podcast.txt`. Suporta `--from-final` para ajustar timestamps após cortes. Doc em `reference/chapters.md`.
+- **`scripts/export-edl.py`**: exporta `edit/edl.json` para CMX 3600 (`.edl`) e FCPXML 1.10 (`.fcpxml`). Importa em Premiere/Resolve/FCP/Avid sem perder o trabalho de corte da skill. Timecode SMPTE com fps do `project.json`. Doc em `reference/export.md`.
+- **`scripts/queue.py`** (cross-platform): batch processing de uma pasta de vídeos. Orquestra init-project + transcribe + auto-cut + render para cada. Estado em `<dir>/.videokit-queue.json` permite resume com `--skip-existing`. Suporta `--preset`, `--with-audio-pack`, `--continue-on-error`, `--dry-run`. Doc em `reference/batch.md`.
+- **`scripts/hwaccel.py`** + integração em `render.{ps1,sh}`: encoder mapping para NVENC (NVIDIA), VideoToolbox (Apple), QSV (Intel), AMF (AMD). Flag `--hwaccel auto|nvenc|videotoolbox|qsv|amf|none` em render. Fallback automático para `libx264` se HW não disponível. `detect-env.{ps1,sh}` agora preenche `hw_encoders: {nvenc, videotoolbox, qsv, amf}` em `env-report.json`. Doc em `reference/hardware-acceleration.md`.
+
+### Adicionado — Tier 0 (anterior)
+- **`scripts/quick-preview.{ps1,sh}`**: render rápido (5-15s, `-preset ultrafast`) de uma janela do vídeo com efeito opcional (`--with-zoom`, `--with-lut`, `--with-subs`). Útil para confirmar visualmente um ajuste antes do re-render completo (~30s-2min vs 15min).
+- **`assets/platform-presets.json`** + `reference/platform-presets.md`: presets `youtube`, `youtube-shorts`, `reels`, `tiktok`, `podcast-video`, `linkedin`, `twitter-x` com aspect ratio + LUFS + duração máxima + subs default por plataforma.
+- **`--preset <plataforma>`** em `audio-process.{ps1,sh}`: sobrescreve `TargetLufs` automaticamente (ex.: `--preset reels` → -16 LUFS).
+- **`scripts/_lib.sh`**: helpers `read_json`, `read_json_stdin`, `require_env_report` para parsing robusto de JSON em scripts Bash.
+- **`scripts/_lib.py`**: helper `require_deps(feature, modules, extras)` para mensagens de erro accionáveis (aponta `install-feature.{ps1,sh} <feature>` em vez de `pip install`).
+
+### Corrigido
+- **JSON parsing frágil em `.sh`** (init-project, render, audio-process, visual-effects, burn-subtitles): `grep -oE | sed` substituído por Python via `read_json`. Paths Windows-style, paths com espaços, e estruturas complexas (ex.: `side_data_list.rotation`) agora são lidos correctamente.
+- **Validação de `ffmpeg_bin`/`ffprobe_bin`** em todos os scripts `.sh` (era assumido executável sem verificar).
+- **Mensagens de erro nos scripts Python** (`transcribe`, `smart-reframe`, `diarize`, `translate-subtitles`, `narrate`, `separate-audio`, `remove-bg`): agora apontam para o feature pack correto e mencionam env vars necessárias (ex.: `HF_TOKEN` para diarização).
+
+### Alterado
+- **Onboarding incremental** (`reference/onboarding.md`): respostas são guardadas após cada pergunta, com marcador `<!-- onboarding-status: in_progress -->`. Se o utilizador interromper, a próxima sessão retoma da primeira pergunta com `(pendente)`. Adicionada opção `"deixa o default"` para auto-preencher tudo.
 
 ---
 

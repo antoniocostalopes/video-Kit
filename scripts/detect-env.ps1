@@ -56,6 +56,25 @@ function Test-LibassSupport {
     }
 }
 
+function Get-HwEncoders {
+    param([string]$FfmpegBin)
+    $result = [ordered]@{
+        nvenc = $false
+        videotoolbox = $false
+        qsv = $false
+        amf = $false
+    }
+    if (-not $FfmpegBin) { return $result }
+    try {
+        $out = cmd /c "`"$FfmpegBin`" -hide_banner -encoders 2>&1"
+        if ($out -match "h264_nvenc")        { $result.nvenc = $true }
+        if ($out -match "h264_videotoolbox") { $result.videotoolbox = $true }
+        if ($out -match "h264_qsv")          { $result.qsv = $true }
+        if ($out -match "h264_amf")          { $result.amf = $true }
+    } catch {}
+    return $result
+}
+
 function Get-FfmpegVersion {
     param([string]$FfmpegBin)
     if (-not $FfmpegBin) { return $null }
@@ -98,6 +117,7 @@ $whisperInstalled = Test-WhisperInstalled -PythonBin $pythonBin
 $libassAvailable = Test-LibassSupport -FfmpegBin $ffmpegBin
 $ffmpegVersion = Get-FfmpegVersion -FfmpegBin $ffmpegBin
 $pythonVersion = Get-PythonVersion -PythonBin $pythonBin
+$hwEncoders = Get-HwEncoders -FfmpegBin $ffmpegBin
 
 $envReport = [ordered]@{
     timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
@@ -107,6 +127,7 @@ $envReport = [ordered]@{
     ffmpeg_version = $ffmpegVersion
     ffprobe_bin = $ffprobeBin
     libass_available = $libassAvailable
+    hw_encoders = $hwEncoders
     python_bin = $pythonBin
     python_version = $pythonVersion
     whisper_installed = $whisperInstalled
@@ -128,6 +149,12 @@ Write-Host "  ffprobe: $(Show-OrMissing $ffprobeBin)"
 Write-Host "  python:  $(Show-OrMissing $pythonBin) $pythonVersion"
 Write-Host "  whisper: $(if ($whisperInstalled) { 'instalado' } else { 'NAO instalado (pip install openai-whisper)' })"
 Write-Host "  libass:  $(if ($libassAvailable) { 'disponivel' } else { 'NAO disponivel (fallback necessario)' })"
+$activeHw = @()
+if ($hwEncoders.nvenc)        { $activeHw += "NVENC" }
+if ($hwEncoders.videotoolbox) { $activeHw += "VideoToolbox" }
+if ($hwEncoders.qsv)          { $activeHw += "Intel QSV" }
+if ($hwEncoders.amf)          { $activeHw += "AMD AMF" }
+Write-Host "  hwaccel: $(if ($activeHw.Count -gt 0) { $activeHw -join ', ' } else { 'nenhum (so software)' })"
 Write-Host ""
 Write-Host "Report: $reportPath"
 

@@ -12,10 +12,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 
+# shellcheck source=_lib.sh
+. "$SCRIPT_DIR/_lib.sh"
+
 PROJECT_DIR=""
 PHASE="all"
 QUALITY="draft"
 CLEAN_CACHE=0
+HWACCEL="none"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,6 +27,7 @@ while [[ $# -gt 0 ]]; do
         --phase)       PHASE="$2"; shift 2 ;;
         --quality)     QUALITY="$2"; shift 2 ;;
         --clean-cache) CLEAN_CACHE=1; shift ;;
+        --hwaccel)     HWACCEL="$2"; shift 2 ;;
         *) echo "Argumento desconhecido: $1" >&2; exit 2 ;;
     esac
 done
@@ -31,32 +36,34 @@ done
 PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
 
 ENV_REPORT="$SKILL_DIR/cache/env-report.json"
-[[ ! -f "$ENV_REPORT" ]] && "$SCRIPT_DIR/detect-env.sh"
-FFMPEG_BIN="$(grep -oE '"ffmpeg_bin": "[^"]*"' "$ENV_REPORT" | sed 's/"ffmpeg_bin": "//;s/"$//')"
-FFPROBE_BIN="$(grep -oE '"ffprobe_bin": "[^"]*"' "$ENV_REPORT" | sed 's/"ffprobe_bin": "//;s/"$//')"
+require_env_report "$ENV_REPORT"
+FFMPEG_BIN="$(read_json "$ENV_REPORT" ffmpeg_bin)"
+FFPROBE_BIN="$(read_json "$ENV_REPORT" ffprobe_bin)"
+PYTHON_BIN="$(read_json "$ENV_REPORT" python_bin)"
+[[ -z "$PYTHON_BIN" ]] && PYTHON_BIN="python3"
+[[ -z "$FFMPEG_BIN"  || ! -x "$FFMPEG_BIN"  ]] && { echo "ERRO: ffmpeg_bin invalido em env-report.json" >&2; exit 1; }
+[[ -z "$FFPROBE_BIN" || ! -x "$FFPROBE_BIN" ]] && { echo "ERRO: ffprobe_bin invalido em env-report.json" >&2; exit 1; }
 
 PROJECT_JSON="$PROJECT_DIR/project.json"
 [[ ! -f "$PROJECT_JSON" ]] && { echo "ERRO: project.json nao existe em $PROJECT_DIR" >&2; exit 1; }
 
-# Helpers para ler campos de project.json (basico, sem jq dependency)
-read_field() {
-    grep -oE "\"$1\": [^,}]*" "$PROJECT_JSON" | head -n1 | sed "s/\"$1\":[[:space:]]*//;s/^\"//;s/\"$//"
-}
+DISPLAY_W="$(read_json "$PROJECT_JSON" media.display_width)"
+DISPLAY_H="$(read_json "$PROJECT_JSON" media.display_height)"
+FPS="$(read_json "$PROJECT_JSON" media.fps)"
+ROTATION="$(read_json "$PROJECT_JSON" media.rotation)"
+SUBTITLE_STYLE="$(read_json "$PROJECT_JSON" settings.subtitle_style)"
+[[ -z "$DISPLAY_W" || -z "$DISPLAY_H" ]] && { echo "ERRO: project.json sem media.display_width/height" >&2; exit 1; }
+[[ -z "$FPS" ]] && FPS=30
+[[ -z "$ROTATION" ]] && ROTATION=0
+[[ -z "$SUBTITLE_STYLE" ]] && SUBTITLE_STYLE="sem"
 
-DISPLAY_W="$(grep -oE '"display_width": [0-9]+' "$PROJECT_JSON" | head -n1 | grep -oE '[0-9]+')"
-DISPLAY_H="$(grep -oE '"display_height": [0-9]+' "$PROJECT_JSON" | head -n1 | grep -oE '[0-9]+')"
-FPS="$(grep -oE '"fps": [0-9.]+' "$PROJECT_JSON" | head -n1 | grep -oE '[0-9.]+')"
-ROTATION="$(grep -oE '"rotation": -?[0-9]+' "$PROJECT_JSON" | head -n1 | grep -oE '\-?[0-9]+')"
-SUBTITLE_STYLE="$(grep -oE '"subtitle_style": "[^"]*"' "$PROJECT_JSON" | head -n1 | sed 's/.*"subtitle_style": "//;s/"$//')"
-
-# Codec args
+# Codec args (delega para hwaccel.py que conhece NVENC/VideoToolbox/QSV/AMF + libx264)
 codec_args() {
-    if [[ "$1" == "draft" ]]; then
-        echo "-c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p"
-    else
-        echo "-c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart"
-    fi
+    "$PYTHON_BIN" "$SCRIPT_DIR/hwaccel.py" --quality "$1" --hwaccel "$HWACCEL"
 }
+
+# Pre-computa para uso na fase overlays (passa para Python heredoc)
+QUALITY_CODEC_ARGS="$(codec_args "$QUALITY")"
 
 # ============================================================
 # Phase: cut
@@ -71,7 +78,8 @@ phase_cut() {
 
     # Source (de project.json)
     local source_rel
-    source_rel="$(grep -oE '"local_copy": "[^"]*"' "$PROJECT_JSON" | head -n1 | sed 's/.*"local_copy": "//;s/"$//')"
+    source_rel="$(read_json "$PROJECT_JSON" source.local_copy)"
+    [[ -z "$source_rel" ]] && { echo "ERRO: source.local_copy em falta em project.json" >&2; exit 1; }
     local source="$PROJECT_DIR/$source_rel"
 
     local needs_reencode=0
@@ -232,15 +240,17 @@ phase_overlays() {
         return 0
     fi
 
-    # Construcao do filter_complex complicada — delegar a Python para clareza
-    python3 - "$PROJECT_DIR/beats_plan.json" "$base" "${files[@]}" "$out" "$FFMPEG_BIN" "$QUALITY" <<'PYEOF'
-import json, subprocess, sys
+    # Construcao do filter_complex complicada — delegar a Python para clareza.
+    # Passa os codec args pre-resolvidos (hwaccel-aware) via env var para evitar split frágil.
+    export VIDEOKIT_CODEC_ARGS="$QUALITY_CODEC_ARGS"
+    python3 - "$PROJECT_DIR/beats_plan.json" "$base" "${files[@]}" "$out" "$FFMPEG_BIN" <<'PYEOF'
+import json, os, shlex, subprocess, sys
 beats_plan_path = sys.argv[1]
 base = sys.argv[2]
-files = sys.argv[3:-3]
-out = sys.argv[-3]
-ffmpeg_bin = sys.argv[-2]
-quality = sys.argv[-1]
+files = sys.argv[3:-2]
+out = sys.argv[-2]
+ffmpeg_bin = sys.argv[-1]
+codec = shlex.split(os.environ.get("VIDEOKIT_CODEC_ARGS", "-c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p"))
 
 with open(beats_plan_path, encoding="utf-8") as f:
     bp = json.load(f)
@@ -262,15 +272,13 @@ for beat in bp.get("beats", []):
     i += 1
 chain = chain.rstrip(";[v").rstrip("[v]") + ",format=yuv420p[outv]"
 
-codec = ["-c:v","libx264","-preset","slow","-crf","18","-pix_fmt","yuv420p","-movflags","+faststart"] if quality == "final" else \
-        ["-c:v","libx264","-preset","ultrafast","-crf","28","-pix_fmt","yuv420p"]
-
 cmd = [ffmpeg_bin, "-y"] + inputs + ["-filter_complex", chain, "-map", "[outv]", "-map", "0:a:0"] + codec + ["-c:a","aac","-b:a","192k", out]
 r = subprocess.run(cmd, capture_output=True, text=True)
 if r.returncode != 0:
     print(r.stderr, file=sys.stderr)
     sys.exit(2)
 PYEOF
+    unset VIDEOKIT_CODEC_ARGS
 
     echo "OK renders/$QUALITY/$QUALITY.mp4 gerado"
 }

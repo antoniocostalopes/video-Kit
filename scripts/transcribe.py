@@ -78,11 +78,10 @@ def extract_audio(ffmpeg_bin: str, video_path: Path, out_wav: Path) -> None:
 
 
 def transcribe_local(audio_path: Path, model_name: str, language: str | None) -> dict:
-    try:
-        import whisper
-    except ImportError:
-        print("ERRO: openai-whisper nao instalado. Corre: pip install -U openai-whisper", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("core", ["whisper"])
+    import whisper
 
     print(f"Carregando modelo Whisper '{model_name}'...", flush=True)
     t0 = time.time()

@@ -74,13 +74,16 @@ def main():
         print("Depois aceita termos do modelo em https://huggingface.co/pyannote/speaker-diarization-3.1", file=sys.stderr)
         sys.exit(2)
 
-    try:
-        import torch
-        from pyannote.audio import Pipeline
-    except ImportError as e:
-        print(f"ERRO: dependencia em falta ({e}).", file=sys.stderr)
-        print("Corre: pip install pyannote.audio torch", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps(
+        "diarization",
+        ["torch", "pyannote.audio"],
+        extras="Depois exporta HF_TOKEN (https://huggingface.co/settings/tokens) e\n"
+               "aceita termos em https://huggingface.co/pyannote/speaker-diarization-3.1",
+    )
+    import torch
+    from pyannote.audio import Pipeline
 
     # Usar audio.wav cached pelo transcribe (se existe)
     audio_wav = args.project_dir / "cache" / "audio.wav"

@@ -24,12 +24,11 @@ from pathlib import Path
 
 def ensure_argos_package(from_lang: str, to_lang: str):
     """Descarrega o pacote de traducao se nao estiver instalado."""
-    try:
-        import argostranslate.package
-        import argostranslate.translate
-    except ImportError:
-        print("ERRO: argostranslate nao instalado. Corre: pip install argostranslate", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("translation", ["argostranslate"])
+    import argostranslate.package
+    import argostranslate.translate
 
     installed = argostranslate.translate.get_installed_languages()
     has = any(

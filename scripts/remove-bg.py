@@ -38,14 +38,12 @@ def main():
                     help="Processar 1 em cada N frames. Default 1 (todos). Higher = faster but lower quality.")
     args = ap.parse_args()
 
-    try:
-        import cv2
-        import numpy as np
-        from rembg import remove, new_session
-    except ImportError as e:
-        print(f"ERRO: dependencia em falta ({e}).", file=sys.stderr)
-        print("Corre: pip install rembg opencv-python pillow", file=sys.stderr)
-        sys.exit(2)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _lib import require_deps
+    require_deps("bg-removal", ["cv2", "numpy", "rembg"])
+    import cv2
+    import numpy as np
+    from rembg import remove, new_session
 
     if not args.input.exists():
         print(f"ERRO: input nao existe: {args.input}", file=sys.stderr)

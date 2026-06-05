@@ -1,0 +1,172 @@
+{
+  "$comment": "Presets por plataforma. Lidos por audio-process, render, smart-reframe. Use --preset <nome>.",
+  "youtube": {
+    "label": "YouTube (long-form)",
+    "video": {
+      "aspect_ratio": "16:9",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "max_duration_s": null,
+      "crf_final": 18,
+      "crf_draft": 28,
+      "encoder_preset_final": "slow",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -14.0,
+      "true_peak": -1.5,
+      "lra": 11
+    },
+    "subtitles": {
+      "default_style": "completas",
+      "font_default_16_9": "Inter",
+      "font_default_9_16": "Bebas Neue"
+    }
+  },
+  "youtube-shorts": {
+    "label": "YouTube Shorts",
+    "video": {
+      "aspect_ratio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "max_duration_s": 60,
+      "crf_final": 18,
+      "crf_draft": 28,
+      "encoder_preset_final": "slow",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -14.0,
+      "true_peak": -1.5,
+      "lra": 9
+    },
+    "subtitles": {
+      "default_style": "karaoke",
+      "font_default_9_16": "Bebas Neue"
+    }
+  },
+  "reels": {
+    "label": "Instagram Reels",
+    "video": {
+      "aspect_ratio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "max_duration_s": 90,
+      "crf_final": 18,
+      "crf_draft": 28,
+      "encoder_preset_final": "slow",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -16.0,
+      "true_peak": -1.5,
+      "lra": 9
+    },
+    "subtitles": {
+      "default_style": "karaoke",
+      "font_default_9_16": "Bebas Neue"
+    }
+  },
+  "tiktok": {
+    "label": "TikTok",
+    "video": {
+      "aspect_ratio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "max_duration_s": 180,
+      "crf_final": 18,
+      "crf_draft": 28,
+      "encoder_preset_final": "slow",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -13.0,
+      "true_peak": -1.5,
+      "lra": 9
+    },
+    "subtitles": {
+      "default_style": "highlights",
+      "font_default_9_16": "Bebas Neue"
+    }
+  },
+  "podcast-video": {
+    "label": "Podcast vídeo (Spotify/YouTube)",
+    "video": {
+      "aspect_ratio": "16:9",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "max_duration_s": null,
+      "crf_final": 20,
+      "crf_draft": 28,
+      "encoder_preset_final": "medium",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -16.0,
+      "true_peak": -1.5,
+      "lra": 11
+    },
+    "subtitles": {
+      "default_style": "completas",
+      "font_default_16_9": "Inter"
+    }
+  },
+  "linkedin": {
+    "label": "LinkedIn (feed video)",
+    "video": {
+      "aspect_ratio": "16:9",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "max_duration_s": 600,
+      "crf_final": 18,
+      "crf_draft": 28,
+      "encoder_preset_final": "slow",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -14.0,
+      "true_peak": -1.5,
+      "lra": 11
+    },
+    "subtitles": {
+      "default_style": "completas",
+      "font_default_16_9": "Inter"
+    }
+  },
+  "twitter-x": {
+    "label": "Twitter / X",
+    "video": {
+      "aspect_ratio": "16:9",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "max_duration_s": 140,
+      "crf_final": 20,
+      "crf_draft": 28,
+      "encoder_preset_final": "medium",
+      "encoder_preset_draft": "ultrafast",
+      "pix_fmt": "yuv420p"
+    },
+    "audio": {
+      "target_lufs": -14.0,
+      "true_peak": -1.5,
+      "lra": 9
+    },
+    "subtitles": {
+      "default_style": "completas",
+      "font_default_16_9": "Inter"
+    }
+  }
+}
